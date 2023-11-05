@@ -1,6 +1,7 @@
 # docker-compose-notolac
 
 ![Alt text](image.png)
+
 This guide will explain you how to add custom Security Header in Nginx Proxy Manager
 
 Before we begin, how to implement or add custom Security Header in Nginx Proxy Manager let's look at what is Web Application Headers and why it is important
