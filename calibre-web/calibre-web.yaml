@@ -1,0 +1,33 @@
+---
+version: "2.1"
+services:
+  calibre-web:
+    image: lscr.io/linuxserver/calibre-web:latest
+    container_name: calibre-web
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+      - DOCKER_MODS=linuxserver/mods:universal-calibre #optional
+      - OAUTHLIB_RELAX_TOKEN_SCOPE=1 #optional
+    volumes:
+      - /mnt/Youtube/Libros/config:/config
+      - /mnt/Youtube/Libros/books:/books
+    ports:
+      - 8083:8083
+    restart: unless-stopped
+
+  calibre:
+    image: lscr.io/linuxserver/calibre:latest
+    container_name: calibre
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+    volumes:
+      - /mnt/Youtube/Libros/books:/config #config
+    ports:
+      - 8082:8080
+      - 8181:8181
+      - 8081:8081
+    restart: unless-stopped

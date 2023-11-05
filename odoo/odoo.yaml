@@ -1,0 +1,34 @@
+---
+version: '3.1'
+services:
+  web: #cambiar el numero de la DB por cada instancia
+    image: odoo:latest
+    restart: unless-stopped
+    depends_on:
+      - db #cambiar el numero de la DB por cada instancia
+    ports:
+      - "8077:8069"
+    volumes:
+      - odoo-cliente-web:/var/lib/odoo
+      - ./config:/etc/odoo
+      - ./addons:/mnt/extra-addons
+      #- /home/notolac/Odoo-Addons/:/var/lib/odoo/.local/share/Odoo/addons/16.0  # activa addons luego de activar la DB
+    environment:
+    - HOST=db #cambiar el numero de la DB por cada instancia
+    - USER= #user
+    - PASSWORD= #password
+    - proxy_mode=True
+  db: #cambiar el numero de la DB por cada instancia
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD= #password
+      - POSTGRES_USER= #user
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - odoo-cliente-db:/var/lib/postgresql/data
+
+volumes: #volumen debe ser interno no usar NFS
+  odoo-cliente-web:
+  odoo-cliente-db:
