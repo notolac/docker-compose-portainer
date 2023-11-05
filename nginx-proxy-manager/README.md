@@ -1,5 +1,6 @@
 # docker-compose-notolac
 
+![Alt text](image.png)
 This guide will explain you how to add custom Security Header in Nginx Proxy Manager
 
 Before we begin, how to implement or add custom Security Header in Nginx Proxy Manager let's look at what is Web Application Headers and why it is important
@@ -45,8 +46,11 @@ volumes: - ./\_hsts.conf:/app/templates/\_hsts.conf:ro
 Step 3.
 Go to NGINX Proxy Manager, click Edit and go to the tab SSL.
 Enable and/or re-enable Force SSL, HSTS Enabled and HSTS Subdomains.
+![Alt text](image-1.png)
 
 Done, you have added custom security headers to your website, you can verify the settings  
 with https://securityheaders.com
+
+![Alt text](image-2.png)
 
 Original Web ---->> https://geekscircuit.com/nginx-proxy-manager/ <<----
