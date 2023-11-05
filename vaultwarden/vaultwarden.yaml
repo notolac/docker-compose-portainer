@@ -1,0 +1,38 @@
+version: "3"
+
+services:
+  vaultwarden:
+    restart: always
+    container_name: vaultwarden
+    image: vaultwarden/server:latest
+    volumes:
+      - VaultWarden-NFS:/data
+    ports:
+      - 8062:80
+    environment:
+      - SMTP_HOST=smtp.office365.com #change this to your smtp server
+      - SMTP_FROM=contoso@yourdomain.dev #change this to your smtp from address
+      - SMTP_FROM_NAME=contoso #change this to your smtp from name
+      - SMTP_SECURITY=starttls #change this to your smtp security
+      - SMTP_PORT=587 #change this to your smtp port
+      - SMTP_USERNAME=info@yourdomain.dev #change this to your smtp username
+      - SMTP_PASSWORD= # Aquí debes poner la contraseña de tu correo
+      - SMTP_TIMEOUT=30
+      - SMTP_AUTH_MECHANISM="Plain","Login"
+      - LOGIN_RATELIMIT_MAX_BURST=10
+      - LOGIN_RATELIMIT_SECONDS=60
+      - DOMAIN=https://yourdomain.dev
+      - INVITATION_ORG_NAME=yourdomain.dev
+      - INVITATIONS_ALLOWED=true
+      - ADMIN_TOKEN= # Aquí debes poner el token
+      - SIGNUPS_ALLOWED=True
+      - SIGNUPS_DOMAINS_WHITELIST= #add all the domains you want to allow signups for
+      - SIGNUPS_VERIFY=true
+      - SIGNUPS_VERIFY_RESEND_TIME=3600
+      - SIGNUPS_VERIFY_RESEND_LIMIT=6
+      - EMERGENCY_ACCESS_ALLOWED=true
+      - SENDS_ALLOWED=true
+      - WEB_VAULT_ENABLED=true
+volumes:
+  VaultWarden-NFS: # Aquí debes poner el nombre del volumen que creaste en Portainer
+    external: true

@@ -1,0 +1,18 @@
+---
+version: '3.8'
+services:
+  app:
+    image: jc21/nginx-proxy-manager:latest
+    restart: always
+    ports:
+      - 8080:80
+      - 8181:81
+      - 443:443
+    volumes:
+      - nginx-proxy-manager-NFS:/data
+      - ./letsencrypt:/etc/letsencrypt
+      - ./_hsts.conf:/app/templates/_hsts.conf:ro
+
+volumes:
+  nginx-proxy-manager-NFS: # Aquí debes poner el nombre del volumen que creaste en Portainer
+    external: true
