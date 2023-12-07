@@ -20,11 +20,11 @@ services:
       - firefly_iii_upload:/var/www/html/storage/upload
     env_file: .env
     ports:
-      - "80:8080"
+      - "8085:8080"
     depends_on:
       - db
   db:
-    image: mariadb
+    image: postgres:16.1
     hostname: db
     container_name: firefly_iii_db
     networks:
@@ -42,7 +42,7 @@ services:
     networks:
       - firefly_iii
     ports:
-      - "81:8080"
+      - "8185:8080"
     depends_on:
       - app
     env_file: .importer.env
