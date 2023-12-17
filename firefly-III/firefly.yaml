@@ -32,7 +32,7 @@ services:
     restart: always
     env_file: .db.env
     volumes:
-      - firefly_iii_db:/var/lib/mysql
+      - firefly_iii_db:/var/lib/postgresql/data
 
   importer:
     image: fireflyiii/data-importer:latest
