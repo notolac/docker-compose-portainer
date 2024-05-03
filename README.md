@@ -51,7 +51,7 @@ To get started with Docker using Portainer and Docker Compose, follow these step
 6. Install portainer node (Web interface from where you manage your nodes or agents) :
 
    ```bash
-   sudo docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v notolac_stuff:/data portainer/portainer-ce:2.20.2
+   sudo docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_stuff:/data portainer/portainer-ce:2.20.2
    ```
 
 7. Install portainer agent (each agent that you will manage from the node, does not run web interface):
@@ -60,7 +60,7 @@ To get started with Docker using Portainer and Docker Compose, follow these step
    sudo docker run -d   -p 9001:9001   --name portainer_agent   --restart=always   -v /var/run/docker.sock:/var/run/docker.sock   -v /var/lib/docker/volumes:/var/lib/docker/volumes   portainer/agent:2.20.2
    ```
 
-8. Access the Portainer web interface by opening the following URL in your web browser: [http://localhost:9443](http://localhost:9443)
+8. Access the Portainer web interface by opening the following URL in your web browser: [https://localhost:9443](https://localhost:9443)
 
    - If you are running Docker on a remote machine, replace `localhost` with the IP address or hostname of the machine.
 
