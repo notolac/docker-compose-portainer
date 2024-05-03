@@ -1,5 +1,5 @@
 ---
-version: '3'
+version: "3"
 volumes:
   semaphore-mysql:
     driver: local
@@ -12,29 +12,29 @@ services:
     environment:
       - MYSQL_RANDOM_ROOT_PASSWORD=yes
       - MYSQL_DATABASE=semaphore
-      - MYSQL_USER=semaphore
-      - MYSQL_PASSWORD=  # change!
+      - MYSQL_USER=userdb
+      - MYSQL_PASSWORD= # change!
     restart: unless-stopped
   semaphore:
     container_name: ansiblesemaphore
-    image: semaphoreui/semaphore:v2.8.90
+    image: semaphoreui/semaphore:v2.9.75
     user: "${UID}:${GID}"
     ports:
-      - 3000:3000
+      - 3002:3000
     environment:
-      - SEMAPHORE_DB_USER=semaphore
-      - SEMAPHORE_DB_PASS=  # change!
+      - SEMAPHORE_DB_USER=userdb
+      - SEMAPHORE_DB_PASS= # change!
       - SEMAPHORE_DB_HOST=mysql
       - SEMAPHORE_DB_PORT=3306
       - SEMAPHORE_DB_DIALECT=mysql
       - SEMAPHORE_DB=semaphore
       - SEMAPHORE_PLAYBOOK_PATH=/tmp/semaphore/
-      - SEMAPHORE_ADMIN_PASSWORD=  # change!
-      - SEMAPHORE_ADMIN_NAME=notolac
-      - SEMAPHORE_ADMIN_EMAIL=admin@localhost
-      - SEMAPHORE_ADMIN=notolac
-      - SEMAPHORE_ACCESS_KEY_ENCRYPTION=  # add to your access key encryption !
-      - ANSIBLE_HOST_KEY_CHECKING=false  # (optional) change to true if you want to enable host key checking
+      - SEMAPHORE_ADMIN_PASSWORD= # change!
+      - SEMAPHORE_ADMIN_NAME=user
+      - SEMAPHORE_ADMIN_EMAIL=email@domain.com
+      - SEMAPHORE_ADMIN=user
+      - SEMAPHORE_ACCESS_KEY_ENCRYPTION=MBGdpW9X4C7r9bA8c5YFSodwjhRrkgzU # add to your access key encryption !
+      - ANSIBLE_HOST_KEY_CHECKING=false # (optional) change to true if you want to enable host key checking
     volumes:
       - ./inventory/:/inventory:ro
       - ./authorized-keys/:/authorized-keys:ro

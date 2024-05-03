@@ -1,0 +1,23 @@
+---
+version: "2.1"
+services:
+  netbootxyz:
+    image: lscr.io/linuxserver/netbootxyz:latest
+    container_name: netbootxyz
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+      - MENU_VERSION=2.0.77 #optional
+      - PORT_RANGE=30000:30010 #optional
+      - SUBFOLDER=/ #optional
+      - NGINX_PORT=80 #optional
+      - WEB_APP_PORT=3000 #optional
+    volumes:
+      - ./config:/config
+      - ./assets:/assets #optional
+    ports:
+      - 3003:3000
+      - 69:69/udp
+      - 8082:80 #optional
+    restart: unless-stopped
