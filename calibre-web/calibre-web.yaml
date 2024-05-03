@@ -11,10 +11,10 @@ services:
       - DOCKER_MODS=linuxserver/mods:universal-calibre #optional
       - OAUTHLIB_RELAX_TOKEN_SCOPE=1 #optional
     volumes:
-      - /mnt/Libros/config:/config
-      - /mnt/Libros/books:/books
+      - /home/media/config:/config
+      - /home/media/books:/books
     ports:
-      - 8083:8083
+      - "8083:8083"
     restart: unless-stopped
 
   calibre:
@@ -25,9 +25,9 @@ services:
       - PGID=1000
       - TZ=Europe/Madrid
     volumes:
-      - /mnt/Libros/books:/config #config
+      - /home/media/books:/config
     ports:
-      - 8082:8080
-      - 8181:8181
-      - 8081:8081
+      - "8082:8080"
+      - "8181:8181"
+      - "8084:8081"
     restart: unless-stopped

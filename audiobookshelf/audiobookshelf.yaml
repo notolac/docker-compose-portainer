@@ -5,13 +5,8 @@ services:
     ports:
       - 13378:80
     volumes:
-      - AudioBooks-NFS:/audiobooks
-      - podcasts-NFS:/podcasts
-      - /appconfig:/config
-      - /appmetadata:/metadata
+      - /home/media/AudioLibros:/audiobooks
+      - /home/media/podcast:/podcasts
+      - /home/media/audiobookshelf/appconfig:/config
+      - /home/media/audiobookshelf/appmetadata:/metadata
     restart: unless-stopped
-volumes:
-  podcasts-NFS:
-    external: true
-  AudioBooks-NFS:
-    external: true
