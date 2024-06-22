@@ -9,6 +9,6 @@ services:
       - 8181:81
       - 443:443
     volumes:
-      - ./nginx-proxy-manager:/data
-      - ./letsencrypt:/etc/letsencrypt
-      - /home/user/hsts/_hsts.conf:/app/templates/_hsts.conf:ro #change to the location of your choice
+      - /home/user/nginx-proxy-manager/data:/data
+      - /home/user/nginx-proxy-manager/letsencrypt:/etc/letsencrypt
+      - /home/user/nginx-proxy-manager/_hsts.conf:/app/templates/_hsts.conf:ro #change to the location of your choice
