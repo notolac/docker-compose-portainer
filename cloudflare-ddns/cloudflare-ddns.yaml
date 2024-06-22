@@ -1,10 +1,10 @@
-version: '2'
+version: "2"
 services:
   cloudflare-ddns:
     image: oznu/cloudflare-ddns:latest
     restart: always
     environment:
-      - API_KEY= #required API key from Cloudflare
+      - API_KEY=$API_KEY #required API key from Cloudflare
       - ZONE= #domain.com
       - SUBDOMAIN= #subdomain.domain.com
       - PROXIED=true #optional

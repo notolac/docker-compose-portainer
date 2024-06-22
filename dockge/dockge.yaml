@@ -4,7 +4,7 @@ services:
     image: louislam/dockge:latest
     restart: unless-stopped
     ports:
-      - 5001:5001
+      - $HOST_PORT:5001
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./data:/app/data
