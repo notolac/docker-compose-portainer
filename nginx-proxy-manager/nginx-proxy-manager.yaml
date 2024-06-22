@@ -1,5 +1,5 @@
 ---
-version: '3.8'
+version: "3.8"
 services:
   app:
     image: jc21/nginx-proxy-manager:latest
@@ -11,7 +11,7 @@ services:
     volumes:
       - nginx-proxy-manager-NFS:/data
       - ./letsencrypt:/etc/letsencrypt
-      - ./_hsts.conf:/app/templates/_hsts.conf:ro
+      - ./hsts/_hsts.conf:/app/templates/_hsts.conf:ro
 
 volumes:
   nginx-proxy-manager-NFS: # Aquí debes poner el nombre del volumen que creaste en Portainer

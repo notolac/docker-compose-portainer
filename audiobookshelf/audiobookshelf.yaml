@@ -3,7 +3,7 @@ services:
   audiobookshelf:
     image: ghcr.io/advplyr/audiobookshelf:latest
     ports:
-      - 13378:80
+      - $HOST_PORT:80
     volumes:
       - /home/media/AudioLibros:/audiobooks
       - /home/media/podcast:/podcasts
