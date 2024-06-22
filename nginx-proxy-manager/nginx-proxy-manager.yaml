@@ -11,4 +11,4 @@ services:
     volumes:
       - ./nginx-proxy-manager:/data
       - ./letsencrypt:/etc/letsencrypt
-      - ./hsts/_hsts.conf:/app/templates/_hsts.conf:ro
+      - /home/notolac/hsts/_hsts.conf:/app/templates/_hsts.conf:ro
