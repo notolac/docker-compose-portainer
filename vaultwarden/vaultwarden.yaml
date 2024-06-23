@@ -8,25 +8,25 @@ services:
     volumes:
       - VaultWarden-NFS:/data
     ports:
-      - 8062:80
+      - $HOST_PORT:80
     environment:
       - SMTP_HOST=smtp.office365.com #change this to your smtp server
-      - SMTP_FROM=contoso@yourdomain.dev #change this to your smtp from address
-      - SMTP_FROM_NAME=contoso #change this to your smtp from name
+      - SMTP_FROM=$SMTP_FROM #change this to your smtp from address
+      - SMTP_FROM_NAME=$SMTP_FROM_NAME #change this to your smtp from name
       - SMTP_SECURITY=starttls #change this to your smtp security
       - SMTP_PORT=587 #change this to your smtp port
-      - SMTP_USERNAME=info@yourdomain.dev #change this to your smtp username
-      - SMTP_PASSWORD= # Aquí debes poner la contraseña de tu correo
+      - SMTP_USERNAME=$SMTP_USERNAME #change this to your smtp username
+      - SMTP_PASSWORD=$SMTP_PASSWORD # Aquí debes poner la contraseña de tu correo
       - SMTP_TIMEOUT=30
       - SMTP_AUTH_MECHANISM="Plain","Login"
       - LOGIN_RATELIMIT_MAX_BURST=10
       - LOGIN_RATELIMIT_SECONDS=60
-      - DOMAIN=https://yourdomain.dev
-      - INVITATION_ORG_NAME=yourdomain.dev
+      - DOMAIN=$DOMAIN #change this to your domain
+      - INVITATION_ORG_NAME=$INVITATION_ORG_NAME #change this to your organization name
       - INVITATIONS_ALLOWED=true
-      - ADMIN_TOKEN= # Aquí debes poner el token
-      - SIGNUPS_ALLOWED=True
-      - SIGNUPS_DOMAINS_WHITELIST= #add all the domains you want to allow signups for
+      - ADMIN_TOKEN=$ADMIN_TOKEN # Aquí debes poner el token
+      - SIGNUPS_ALLOWED=True #change this to false to disable signups
+      - SIGNUPS_DOMAINS_WHITELIST=$SIGNUPS_DOMAINS_WHITELIST #add all the domains you want to allow signups for / separate with comma
       - SIGNUPS_VERIFY=true
       - SIGNUPS_VERIFY_RESEND_TIME=3600
       - SIGNUPS_VERIFY_RESEND_LIMIT=6
