@@ -3,7 +3,7 @@ version: "3"
 services:
   vaultwarden:
     restart: always
-    container_name: vaultwarden
+    container_name: $container_name
     image: vaultwarden/server:latest
     volumes:
       - VaultWarden-NFS:/data
