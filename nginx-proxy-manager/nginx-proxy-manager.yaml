@@ -23,7 +23,7 @@ services:
       - TZ=Europe/Madrid
       - SKIP_ARCHIVED_LOGS=False #optional
       - DEBUG=False #optional
-      - BASIC_AUTH=True #optional
+      - BASIC_AUTH=False #optional
       - BASIC_AUTH_USERNAME= #optional
       - BASIC_AUTH_PASSWORD= #optional
       - EXCLUDE_IPS=127.0.0.1 #optional - comma delimited
