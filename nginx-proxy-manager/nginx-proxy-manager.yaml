@@ -24,9 +24,9 @@ services:
       - TZ=Europe/Madrid
       - SKIP_ARCHIVED_LOGS=False #optional
       - DEBUG=False #optional
-      - BASIC_AUTH=True #optional
-      - BASIC_AUTH_USERNAME=$BASIC_AUTH_USERNAME #optional
-      - BASIC_AUTH_PASSWORD=$BASIC_AUTH_PASSWORD #optional
+      - BASIC_AUTH=True
+      - BASIC_AUTH_USERNAME=$BASIC_AUTH_USERNAME
+      - BASIC_AUTH_PASSWORD=$BASIC_AUTH_PASSWORD
       - EXCLUDE_IPS=127.0.0.1 #optional - comma delimited
       - LOG_TYPE=NPM #optional - more information below
       - ENABLE_BROWSERS_LIST=True #optional - more information below
@@ -36,4 +36,4 @@ services:
       - PROCESSING_THREADS=1 #optional - This parameter sets the number of concurrent processing threads in the program's execution, affecting log data analysis, typically adjusted based on CPU cores. Default is 1. https://goaccess.io/man
     volumes:
       - /home/notolac/nginx-proxy-manager/data/logs:/opt/log:ro #required - path to your Nginx Proxy Manager logs
-    #- /path/to/host/custom:/opt/custom #optional, required if using log_type = CUSTOM #change to the location of your choice
+      #- /path/to/host/custom:/opt/custom #optional, required if using log_type = CUSTOM #change to the location of your choice
