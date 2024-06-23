@@ -23,9 +23,9 @@ services:
       - TZ=Europe/Madrid
       - SKIP_ARCHIVED_LOGS=False #optional
       - DEBUG=False #optional
-      - BASIC_AUTH=True
-      - BASIC_AUTH_USERNAME=$BASIC_AUTH_USERNAME
-      - BASIC_AUTH_PASSWORD=$BASIC_AUTH_PASSWORD
+      - BASIC_AUTH=True #optional
+      - BASIC_AUTH_USERNAME= #optional
+      - BASIC_AUTH_PASSWORD= #optional
       - EXCLUDE_IPS=127.0.0.1 #optional - comma delimited
       - LOG_TYPE=NPM #optional - more information below
       - ENABLE_BROWSERS_LIST=True #optional - more information below
