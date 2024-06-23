@@ -1,5 +1,5 @@
 ---
-version: '3.3'
+version: "3.3"
 
 services:
   uptime-kuma:
@@ -8,7 +8,7 @@ services:
     volumes:
       - kuma-slave-NFS:/app/data
     ports:
-      - 3001:3001  # <Host Port>:<Container Port>
+      - $HOST_PORT:3001 # <Host Port>:<Container Port>
     restart: always
 
 volumes:

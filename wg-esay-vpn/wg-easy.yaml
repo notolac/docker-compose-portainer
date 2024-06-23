@@ -4,9 +4,9 @@ services:
     environment:
       # ⚠️ Required:
       # Change this to your host's public address
-      - WG_HOST=yourdomain.dev
+      - WG_HOST=$WG_HOST # your domain or your IP address
       # Optional:
-      - PASSWORD=randompassword
+      - PASSWORD=$PASSWORD
       - WG_PORT=51820
       - WG_DEFAULT_ADDRESS=10.8.0.x
       - WG_DEFAULT_DNS=1.1.1.2

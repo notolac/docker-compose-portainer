@@ -1,0 +1,9 @@
+version: "3.3"
+services:
+  speedtest:
+    restart: unless-stopped
+    container_name: openspeedtest
+    ports:
+      - "$HOST_PORT1:3000" # <Host Port>:<Container Port> http
+      - "$HOST_PORT2:3001" # <Host Port>:<Container Port> https
+    image: openspeedtest/latest
