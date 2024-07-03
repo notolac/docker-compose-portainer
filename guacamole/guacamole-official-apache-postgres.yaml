@@ -29,9 +29,9 @@ services:
     environment:
       POSTGRESQL_HOSTNAME: postgres-guacamole # Hostname del contenedor postgres
       POSTGRESQL_PORT: 5432 # Puerto estándar de PostgreSQL
-      POSTGRES_DATABASE: $POSTGRES_DATABASE
-      POSTGRES_USER: $POSTGRES_USER
-      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+      POSTGRESQL_DATABASE: $POSTGRESQL_DATABASE
+      POSTGRESQL_USER: $POSTGRESQL_USER
+      POSTGRESQL_PASSWORD: $POSTGRESQL_PASSWORD
       GUACD_HOSTNAME: guacd # Hostname del contenedor guacd
       GUACD_PORT: 4822 # Puerto estándar de guacd
     ports:
