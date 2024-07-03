@@ -45,4 +45,4 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
+  mysql_data:
