@@ -30,9 +30,9 @@ services:
     environment:
       MYSQL_HOSTNAME: "mysql-guacamole" # Hostname del contenedor mysql
       MYSQL_PORT: "3306" # Puerto estándar de PostgreSQL
-      MYSQL_DATABASE: $POSTGRESQL_DATABASE
-      MYSQL_USER: $POSTGRESQL_USER
-      MYSQL_PASSWORD: $POSTGRESQL_PASSWORD
+      MYSQL_DATABASE: $MYSQL_DATABASE
+      MYSQL_USER: $MYSQL_USER
+      MYSQL_PASSWORD: $MYSQL_PASSWORD
       GUACD_HOSTNAME: "guacd" # Hostname del contenedor guacd
       GUACD_PORT: "4822" # Puerto estándar de guacd
     ports:
