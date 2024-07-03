@@ -27,19 +27,17 @@ services:
       - guacd
       - postgres-guacamole
     environment:
+      POSTGRESQL_HOSTNAME: postgres-guacamole # Hostname del contenedor postgres
+      POSTGRESQL_PORT: 5432 # Puerto estándar de PostgreSQL
       POSTGRES_DATABASE: $POSTGRES_DATABASE
       POSTGRES_USER: $POSTGRES_USER
       POSTGRES_PASSWORD: $POSTGRES_PASSWORD
       GUACD_HOSTNAME: guacd # Hostname del contenedor guacd
       GUACD_PORT: 4822 # Puerto estándar de guacd
-      POSTGRESQL_HOSTNAME: postgres-guacamole # Hostname del contenedor postgres
-      POSTGRESQL_PORT: 5432 # Puerto estándar de PostgreSQL
     ports:
       - "$HOSTPORT:8080"
     networks:
       - guacnet
-    volumes:
-      - guacamole_data:/etc/guacamole # Asumiendo que Guacamole guarda datos importantes aquí
 
 networks:
   guacnet:
@@ -47,4 +45,3 @@ networks:
 
 volumes:
   postgres_data:
-  guacamole_data:
