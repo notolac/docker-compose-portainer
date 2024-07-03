@@ -12,9 +12,9 @@ services:
     image: postgres:16.3
     container_name: guacamoledb
     environment:
-      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
-      POSTGRES_DB: $POSTGRES_DB
-      POSTGRES_USER: $POSTGRES_USER
+      - POSTGRES_PASSWORD:$POSTGRES_PASSWORD
+      - POSTGRES_DB:$POSTGRES_DB
+      - POSTGRES_USER:$POSTGRES_USER
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
