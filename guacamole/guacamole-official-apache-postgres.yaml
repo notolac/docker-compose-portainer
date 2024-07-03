@@ -9,7 +9,7 @@ services:
       - "4822:4822"
 
   postgres-guacamole:
-    image: postgres
+    image: postgres:15.7
     container_name: postgres-guacamole
     environment:
       POSTGRES_PASSWORD: $POSTGRES_PASSWORD
