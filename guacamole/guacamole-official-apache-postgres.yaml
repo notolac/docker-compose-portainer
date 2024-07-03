@@ -23,7 +23,7 @@ services:
     container_name: guacamole-oficial
     depends_on:
       - guacd
-      - postgres
+      - postgres-guacamole
     environment:
       POSTGRES_DATABASE: $POSTGRES_DATABASE
       POSTGRES_USER: $POSTGRES_USER
