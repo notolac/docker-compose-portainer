@@ -1,0 +1,44 @@
+version: "3"
+services:
+  guacd:
+    image: guacamole/guacd
+    container_name: guacd
+    networks:
+      - guacnet
+
+  postgres:
+    image: postgres
+    container_name: postgres-guacamole
+    environment:
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+      POSTGRES_DB: $POSTGRES_DB
+      POSTGRES_USER: $POSTGRES_USER
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - guacnet
+
+  guacamole:
+    image: guacamole/guacamole
+    container_name: guacamole
+    depends_on:
+      - guacd
+      - postgres
+    environment:
+      POSTGRES_DATABASE: $POSTGRES_DATABASE
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+    ports:
+      - "$HOSTPORT:8080"
+    networks:
+      - guacnet
+    volumes:
+      - guacamole_data:/etc/guacamole # Asumiendo que Guacamole guarda datos importantes aquí
+
+networks:
+  guacnet:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  guacamole_data:
