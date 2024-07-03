@@ -12,9 +12,9 @@ services:
     image: postgres:15.7
     container_name: postgres-guacamole
     environment:
-      - POSTGRES_PASSWORD: $POSTGRES_PASSWORD
-      - POSTGRES_DB: $POSTGRES_DB
-      - POSTGRES_USER: $POSTGRES_USER
+      - POSTGRES_PASSWORD: "$POSTGRES_PASSWORD"
+      - POSTGRES_DB: "$POSTGRES_DB"
+      - POSTGRES_USER: "$POSTGRES_USER"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -27,13 +27,13 @@ services:
       - guacd
       - postgres-guacamole
     environment:
-      - POSTGRESQL_HOSTNAME: postgres-guacamole # Hostname del contenedor postgres
-      - POSTGRESQL_PORT: 5432 # Puerto estándar de PostgreSQL
-      - POSTGRESQL_DATABASE: $POSTGRESQL_DATABASE
-      - POSTGRESQL_USER: $POSTGRESQL_USER
-      - POSTGRESQL_PASSWORD: $POSTGRESQL_PASSWORD
-      - GUACD_HOSTNAME: guacd # Hostname del contenedor guacd
-      - GUACD_PORT: 4822 # Puerto estándar de guacd
+      - POSTGRESQL_HOSTNAME: "postgres-guacamole" # Hostname del contenedor postgres
+      - POSTGRESQL_PORT: "5432" # Puerto estándar de PostgreSQL
+      - POSTGRESQL_DATABASE: "$POSTGRESQL_DATABASE"
+      - POSTGRESQL_USER: "$POSTGRESQL_USER"
+      - POSTGRESQL_PASSWORD: "$POSTGRESQL_PASSWORD"
+      - GUACD_HOSTNAME: "guacd" # Hostname del contenedor guacd
+      - GUACD_PORT: "4822" # Puerto estándar de guacd
     ports:
       - "$HOSTPORT:8080"
     networks:
