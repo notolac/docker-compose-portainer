@@ -35,6 +35,7 @@ services:
       MYSQL_PASSWORD: $MYSQL_PASSWORD
       GUACD_HOSTNAME: "guacd" # Hostname del contenedor guacd
       GUACD_PORT: "4822" # Puerto estándar de guacd
+      TOTP_ENABLED: "true"
     ports:
       - "$HOSTPORT:8080"
     networks:
