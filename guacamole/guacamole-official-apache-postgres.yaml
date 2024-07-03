@@ -6,7 +6,7 @@ services:
     networks:
       - guacnet
 
-  postgres:
+  postgres-guacamole:
     image: postgres
     container_name: postgres-guacamole
     environment:
@@ -30,6 +30,8 @@ services:
       POSTGRES_PASSWORD: $POSTGRES_PASSWORD
       GUACD_HOSTNAME: guacd # Hostname del contenedor guacd
       GUACD_PORT: 4822 # Puerto estándar de guacd
+      POSTGRESQL_HOSTNAME: postgres-guacamole # Hostname del contenedor postgres
+      POSTGRESQL_PORT: 5432 # Puerto estándar de PostgreSQL
     ports:
       - "$HOSTPORT:8080"
     networks:
