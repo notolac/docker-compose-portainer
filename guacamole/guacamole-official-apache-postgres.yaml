@@ -20,7 +20,7 @@ services:
 
   guacamole:
     image: guacamole/guacamole
-    container_name: guacamole
+    container_name: guacamole-oficial
     depends_on:
       - guacd
       - postgres
