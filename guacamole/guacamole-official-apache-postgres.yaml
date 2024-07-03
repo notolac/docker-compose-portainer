@@ -8,15 +8,16 @@ services:
     ports:
       - "4822:4822"
 
-  postgres-guacamole:
-    image: postgres:16.3
+  mysql-guacamole:
+    image: mysql:8.0
     container_name: guacamoledb
     environment:
-      - POSTGRES_PASSWORD:$POSTGRES_PASSWORD
-      - POSTGRES_DB:$POSTGRES_DB
-      - POSTGRES_USER:$POSTGRES_USER
+      - MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
+      - MYSQL_DATABASE=$MYSQL_DATABASE
+      - MYSQL_USER=$MYSQL_USER
+      - MYSQL_PASSWORD=$MYSQL_PASSWORD
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
     networks:
       - guacnet
 
@@ -25,13 +26,13 @@ services:
     container_name: guacamole-oficial
     depends_on:
       - guacd
-      - postgres-guacamole
+      - mysql-guacamole
     environment:
-      POSTGRESQL_HOSTNAME: "postgres-guacamole" # Hostname del contenedor postgres
-      POSTGRESQL_PORT: "5432" # Puerto estándar de PostgreSQL
-      POSTGRESQL_DATABASE: $POSTGRESQL_DATABASE
-      POSTGRESQL_USER: $POSTGRESQL_USER
-      POSTGRESQL_PASSWORD: $POSTGRESQL_PASSWORD
+      MYSQL_HOSTNAME: "mysql-guacamole" # Hostname del contenedor mysql
+      MYSQL_PORT: "3306" # Puerto estándar de PostgreSQL
+      MYSQL_DATABASE: $POSTGRESQL_DATABASE
+      MYSQL_USER: $POSTGRESQL_USER
+      MYSQL_PASSWORD: $POSTGRESQL_PASSWORD
       GUACD_HOSTNAME: "guacd" # Hostname del contenedor guacd
       GUACD_PORT: "4822" # Puerto estándar de guacd
     ports:
