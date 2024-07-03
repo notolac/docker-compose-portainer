@@ -17,6 +17,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - guacnet
+    ports:
+      - "4822:4822"
 
   guacamole:
     image: guacamole/guacamole
