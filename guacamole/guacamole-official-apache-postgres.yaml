@@ -28,6 +28,8 @@ services:
       POSTGRES_DATABASE: $POSTGRES_DATABASE
       POSTGRES_USER: $POSTGRES_USER
       POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+      GUACD_HOSTNAME: guacd # Hostname del contenedor guacd
+      GUACD_PORT: 4822 # Puerto estándar de guacd
     ports:
       - "$HOSTPORT:8080"
     networks:
