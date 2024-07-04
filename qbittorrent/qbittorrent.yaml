@@ -1,0 +1,19 @@
+---
+services:
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+      - WEBUI_PORT=8484
+      - TORRENTING_PORT=6881
+    volumes:
+      - /home/notolac/qbittorrent:/config
+      - /home/media/radarr-downloads:/downloads
+    ports:
+      - 8484:8080
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped
