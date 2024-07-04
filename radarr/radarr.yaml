@@ -11,7 +11,7 @@ services:
       - PUID=1000 # for UserID
       - PGID=1000 # for GroupID
     volumes:
-      - /home/plex/Peliculas:/movies # Location of Movie library on disk (See note in Application setup)
+      - /home/plex:/movies # Location of Movie library on disk (See note in Application setup)
       - /home/media/radarr-downloads:/downloads # Location of download managers output directory (See note in Application setup)
       - /home/notolac/radarr-data:/config # Database and Radarr configs
     ports:
