@@ -9,7 +9,7 @@ services:
       - TZ=Europe/Madrid
       - APP_KEY=$APP_KEY
       - DB_CONNECTION=sqlite
-      - SPEEDTEST_SCHEDULE=0 2 */2 * *
+      - SPEEDTEST_SCHEDULE=
       - SPEEDTEST_SERVERS=
       - DB_HOST= #optional
       - DB_PORT= #optional
