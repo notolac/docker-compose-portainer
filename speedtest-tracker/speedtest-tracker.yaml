@@ -16,7 +16,7 @@ services:
       - DB_DATABASE= #optional
       - DB_USERNAME= #optional
       - DB_PASSWORD= #optional
-      - DISPLAY_TIMEZONE=Etc/UTC #optional
+      - DISPLAY_TIMEZONE=Europe/Madrid #optional
       - PRUNE_RESULTS_OLDER_THAN=0 #optional
     volumes:
       - /home/notolac/speedtest-tracker:/config
