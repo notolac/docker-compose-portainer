@@ -1,7 +1,7 @@
 ---
 services:
   speedtest-tracker:
-    image: lscr.io/linuxserver/speedtest-tracker:0.19.0
+    image: lscr.io/linuxserver/speedtest-tracker:latest
     container_name: speedtest-tracker
     environment:
       - PUID=1000
@@ -9,7 +9,7 @@ services:
       - TZ=Europe/Madrid
       - APP_KEY=$APP_KEY
       - DB_CONNECTION=sqlite
-      - SPEEDTEST_SCHEDULE=
+      - SPEEDTEST_SCHEDULE=0 2 */2 * *
       - SPEEDTEST_SERVERS=
       - DB_HOST= #optional
       - DB_PORT= #optional
