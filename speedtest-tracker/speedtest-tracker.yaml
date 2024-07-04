@@ -9,7 +9,7 @@ services:
       - TZ=Europe/Madrid
       - APP_KEY=$APP_KEY
       - DB_CONNECTION=sqlite
-      - SPEEDTEST_SCHEDULE=0 0,12 * * *
+      - SPEEDTEST_SCHEDULE=$SPEEDTEST_SCHEDULE
       - SPEEDTEST_SERVERS=
       - DB_HOST= #optional
       - DB_PORT= #optional
@@ -18,6 +18,7 @@ services:
       - DB_PASSWORD= #optional
       - DISPLAY_TIMEZONE=Europe/Madrid #optional
       - PRUNE_RESULTS_OLDER_THAN=0 #optional
+      - TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN
     volumes:
       - /home/notolac/speedtest-tracker:/config
     ports:
