@@ -160,6 +160,6 @@ Accede a tu servidor en `http://<your-server-ip>:7890/report.html` para ver el i
 
 Con GoAccess y Nginx Proxy Manager trabajando juntos, puedes obtener una visión detallada y en tiempo real del tráfico y rendimiento de tus servidores proxy. Esta integración te permite identificar rápidamente problemas, optimizar el rendimiento y entender mejor el comportamiento de los usuarios.
 
-Para más información sobre GoAccess, puedes consultar su [documentación oficial](https://goaccess.io/documentation).
+Para más información sobre GoAccess, puedes consultar su [documentación oficial](https://goaccess.io/man).
 
 ---
