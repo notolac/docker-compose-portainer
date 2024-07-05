@@ -1,5 +1,3 @@
-Entendido. Aquí tienes una versión ampliada de la documentación con una descripción detallada de GoAccess, sus funcionalidades y la explicación de los tipos de logs que puedes ver al integrarlo con Nginx Proxy Manager (NPM).
-
 ---
 
 # Documentación de GoAccess y Nginx Proxy Manager (NPM)
