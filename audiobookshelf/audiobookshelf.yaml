@@ -3,10 +3,12 @@ services:
   audiobookshelf:
     image: ghcr.io/advplyr/audiobookshelf:latest
     ports:
-      - $HOST_PORT:80
+      - 13378:80
     volumes:
       - /home/media/multimedia/AudioLibros:/audiobooks
       - /home/media/multimedia/podcast:/podcasts
       - /home/media/multimedia/audiobookshelf/appconfig:/config
       - /home/media/multimedia/audiobookshelf/appmetadata:/metadata
     restart: unless-stopped
+    environment:
+      - TZ=Europe/Madrid
