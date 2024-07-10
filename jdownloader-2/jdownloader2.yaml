@@ -6,5 +6,5 @@ services:
     ports:
       - "$HOST_PORT:5800"
     volumes:
-      - "/docker/appdata/jdownloader-2:/config:rw"
-      - "/mnt/Jdownload:/output:rw"
+      - "/home/notolac/jdownloader:/config:rw"
+      - "/home/media/multimedia/radarr-downloads:/output:rw"
