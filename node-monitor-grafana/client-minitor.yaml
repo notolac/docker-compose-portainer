@@ -10,7 +10,7 @@ services:
     image: prom/prometheus:latest
     container_name: prometheus
     ports:
-      - "$HOST_PORT1:9090"
+      - $HOST_1PORT:9090
     volumes:
       - /etc/prometheus:/etc/prometheus
       - prometheus-data:/prometheus
@@ -21,7 +21,7 @@ services:
     image: quay.io/prometheus/node-exporter:latest
     container_name: node_exporter
     ports:
-      - "$HOST_PORT2:9100"
+      - "$HOST_2PORT:9100"
     command: "--path.rootfs=/host"
     pid: host
     restart: unless-stopped
@@ -32,7 +32,7 @@ services:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
     ports:
-      - "$HOST_PORT3:8080"
+      - "$HOST_3PORT:8080"
 
     volumes:
       - /:/rootfs:ro
