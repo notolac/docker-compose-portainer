@@ -72,7 +72,7 @@ services:
       PHOTOPRISM_DATABASE_NAME: "photoprism" # MariaDB or MySQL database schema name
       PHOTOPRISM_DATABASE_USER: "$PHOTOPRISM_DATABASE_USER" # MariaDB or MySQL database user name
       PHOTOPRISM_DATABASE_PASSWORD: "$PHOTOPRISM_DATABASE_PASSWORD" # MariaDB or MySQL database user password
-      PHOTOPRISM_SITE_CAPTION: "AI-Powered Photos App"
+      PHOTOPRISM_SITE_CAPTION: "CasRom Photos App"
       PHOTOPRISM_SITE_DESCRIPTION: "" # meta site description
       PHOTOPRISM_SITE_AUTHOR: "" # meta site author
       ## Video Transcoding (https://docs.photoprism.app/getting-started/advanced/transcoding/):
@@ -101,10 +101,10 @@ services:
     ## Storage Folders: "~" is a shortcut for your home directory, "." for the current directory
     volumes:
       # "/host/folder:/photoprism/folder"                # Example
-      - "/home/media/PhotoPrism-fotos:/photoprism/originals" # Original media files (DO NOT REMOVE)
+      - "/home/media/multimedia/PhotoPrism-fotos:/photoprism/originals" # Original media files (DO NOT REMOVE)
       # - "/example/family:/photoprism/originals/family" # *Additional* media folders can be mounted like this
       # - "~/Import:/photoprism/import"                  # *Optional* base folder from which files can be imported to originals
-      - "/home/media/PhotoPrism-cache:/photoprism/storage" # *Writable* storage folder for cache, database, and sidecar files (DO NOT REMOVE)
+      - "/home/media/multimedia/PhotoPrism-cache:/photoprism/storage" # *Writable* storage folder for cache, database, and sidecar files (DO NOT REMOVE)
 
   ## Database Server (recommended)
   ## see https://docs.photoprism.app/getting-started/faq/#should-i-use-sqlite-mariadb-or-mysql
