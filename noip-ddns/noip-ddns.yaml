@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  noip-duc:
+    image: ghcr.io/noipcom/noip-duc:latest
+    container_name: noip-duc
+    environment:
+      - NOIP_USERNAME=$NOIP_USERNAME #DdnsKeyUser
+      - NOIP_PASSWORD=$NOIP_PASSWORD #DdnsKeyPass
+      - NOIP_HOSTNAMES=all.ddnskey.com
+    restart: unless-stopped
