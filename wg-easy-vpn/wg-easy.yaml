@@ -6,7 +6,7 @@ services:
       # Change this to your host's public address
       - WG_HOST=$WG_HOST # your domain or your IP address
       # Optional:
-      - PASSWORD_HASH=$PASSWORD_HASH
+      - PASSWORD=$PASSWORD
       - WG_PORT=51820
       - WG_DEFAULT_ADDRESS=10.8.0.x
       - WG_DEFAULT_DNS=$WG_DEFAULT_DNS
