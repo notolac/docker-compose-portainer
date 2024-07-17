@@ -6,7 +6,7 @@ services:
       # Change this to your host's public address
       - WG_HOST=$WG_HOST # your domain or your IP address
       # Optional:
-      - PASSWORD=$PASSWORD
+      - PASSWORD_HASH=$PASSWORD_HASH
       - WG_PORT=51820
       - WG_DEFAULT_ADDRESS=10.8.0.x
       - WG_DEFAULT_DNS=$WG_DEFAULT_DNS
@@ -16,6 +16,7 @@ services:
       # - WG_POST_UP=echo "Post Up" > /etc/wireguard/post-up.txt
       # - WG_PRE_DOWN=echo "Pre Down" > /etc/wireguard/pre-down.txt
       # - WG_POST_DOWN=echo "Post Down" > /etc/wireguard/post-down.txt
+      - UI_TRAFFIC_STATS=true
 
     image: ghcr.io/wg-easy/wg-easy
     container_name: wg-easy
