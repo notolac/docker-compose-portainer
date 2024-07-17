@@ -10,10 +10,10 @@ services:
         limits:
           memory: 1000M
     volumes:
-      - /home/notolac/mealie/mealie-data:/app/data/
+      - /home/notolac/mealie:/app/data/
     environment:
       # Set Backend ENV Variables Here
-      ALLOW_SIGNUP: true
+      ALLOW_SIGNUP: false
       PUID: 1000
       PGID: 1000
       TZ: Europe/Madrid
