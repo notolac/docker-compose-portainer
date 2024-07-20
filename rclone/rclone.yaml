@@ -12,7 +12,7 @@ services:
       [
         "/bin/sh",
         "-c",
-        "rclone sync /data/multimedia chiguire-bot-gdrive:/path/in/shared/drive/multimedia && rclone sync /data/Plex chiguire-bot-gdrive:/path/in/shared/drive/Plex",
+        "rclone sync /data/multimedia chiguire-bot-gdrive:/multimedia && rclone sync /data/Plex chiguire-bot-gdrive:/Plex",
       ]
     environment:
       - RCLONE_CONFIG=/config/rclone/rclone.conf
