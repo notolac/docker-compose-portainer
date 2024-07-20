@@ -1,5 +1,3 @@
----
-
 ## Documentación para Desplegar `rclone` Usando Docker y Docker Compose
 
 ### Español
@@ -44,7 +42,7 @@ Usa las credenciales obtenidas en el paso anterior para completar la configuraci
 Aquí tienes un archivo `docker-compose.yml` para desplegar `rclone` usando Docker Compose. Este archivo sincroniza directorios locales con Google Drive.
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   rclone_sync:
@@ -54,7 +52,12 @@ services:
       - ~/.config/rclone:/config/rclone:ro
       - /home/media/multimedia:/data/multimedia
       - /home/media/Plex:/data/Plex
-    entrypoint: ["/bin/sh", "-c", "rclone sync /data/multimedia gdrive:/path/in/shared/drive/multimedia && rclone sync /data/Plex gdrive:/path/in/shared/drive/Plex"]
+    entrypoint:
+      [
+        "/bin/sh",
+        "-c",
+        "rclone sync /data/multimedia gdrive:/path/in/shared/drive/multimedia && rclone sync /data/Plex gdrive:/path/in/shared/drive/Plex",
+      ]
     environment:
       - RCLONE_CONFIG=/config/rclone/rclone.conf
     user: "${UID}:${GID}"
@@ -103,7 +106,7 @@ Use the credentials obtained in the previous step to complete the configuration 
 Here is a `docker-compose.yml` file to deploy `rclone` using Docker Compose. This file synchronizes local directories with Google Drive.
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   rclone_sync:
@@ -113,11 +116,14 @@ services:
       - ~/.config/rclone:/config/rclone:ro
       - /home/media/multimedia:/data/multimedia
       - /home/media/Plex:/data/Plex
-    entrypoint: ["/bin/sh", "-c", "rclone sync /data/multimedia gdrive:/path/in/shared/drive/multimedia && rclone sync /data/Plex gdrive:/path/in/shared/drive/Plex"]
+    entrypoint:
+      [
+        "/bin/sh",
+        "-c",
+        "rclone sync /data/multimedia gdrive:/path/in/shared/drive/multimedia && rclone sync /data/Plex gdrive:/path/in/shared/drive/Plex",
+      ]
     environment:
       - RCLONE_CONFIG=/config/rclone/rclone.conf
     user: "${UID}:${GID}"
     restart: unless-stopped
 ```
-
----
