@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  rclone:
+    image: rclone/rclone:latest
+    container_name: rclone_sync
+    volumes:
+      - /home/notolac/.config/rclone/rclone.conf:/config/rclone/rclone.conf
+      - /home/media/multimedia:/data/multimedia
+      - /home/media/Plex:/data/Plex
+    command: >
+      sh -c "rclone sync /data/multimedia gdrive:/path/in/shared/drive/multimedia && 
+             rclone sync /data/Plex gdrive:/path/in/shared/drive/Plex"
+    environment:
+      - RCLONE_CONFIG=/config/rclone/rclone.conf
