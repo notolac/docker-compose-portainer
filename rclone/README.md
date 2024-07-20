@@ -56,7 +56,7 @@ services:
       [
         "/bin/sh",
         "-c",
-        "rclone sync /data/multimedia gdrive:/path/in/shared/drive/multimedia && rclone sync /data/Plex gdrive:/path/in/shared/drive/Plex",
+        "rclone sync /data/multimedia gdrive:/multimedia && rclone sync /data/Plex gdrive:/Plex",
       ]
     environment:
       - RCLONE_CONFIG=/config/rclone/rclone.conf
@@ -120,7 +120,7 @@ services:
       [
         "/bin/sh",
         "-c",
-        "rclone sync /data/multimedia gdrive:/path/in/shared/drive/multimedia && rclone sync /data/Plex gdrive:/path/in/shared/drive/Plex",
+        "rclone sync /data/multimedia gdrive:/multimedia && rclone sync /data/Plex gdrive:/Plex",
       ]
     environment:
       - RCLONE_CONFIG=/config/rclone/rclone.conf
