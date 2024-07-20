@@ -5,7 +5,7 @@ services:
     image: rclone/rclone:latest
     container_name: rclone_sync
     volumes:
-      - /home/notolac/.config/rclone/rclone.conf:/config/rclone/rclone.conf:ro
+      - /home/notolac/.config/rclone/rclone.conf:/config/rclone/rclone.conf
       - /home/media/multimedia:/data/multimedia
       - /home/media/Plex:/data/Plex
     entrypoint:
