@@ -11,8 +11,8 @@ services:
       - DOCKER_MODS=linuxserver/mods:universal-calibre #optional
       - OAUTHLIB_RELAX_TOKEN_SCOPE=1 #optional
     volumes:
-      - /home/media/config:/config
-      - /home/media/books:/books
+      - /media/raid/multimedia/config:/config
+      - /media/raid/multimedia/books:/books
     ports:
       - "$HOST_PORT1:8083"
     restart: unless-stopped

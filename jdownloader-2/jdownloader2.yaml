@@ -7,4 +7,4 @@ services:
       - "$HOST_PORT:5800"
     volumes:
       - "/home/notolac/jdownloader:/config:rw"
-      - "/home/media/multimedia/radarr-downloads:/output:rw"
+      - "/media/raid/multimedia/radarr-downloads:/output:rw"

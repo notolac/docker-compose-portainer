@@ -27,13 +27,13 @@ To get started with Docker using Portainer and Docker Compose, follow these step
 2. Download GPG certificate and repositories to run via APT, use `debian` or `ubuntu` for the appropriate OS:
 
    ```bash
-   sudo curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/debian.gpg
+   sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/ubuntu.gpg
    ```
 
 3. Add the downloaded repository to the system,use `debian` or `ubuntu` for the appropriate OS:
 
    ```bash
-   sudo add-apt-repository "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
+   sudo add-apt-repository "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
    ```
 
 4. Update the repositories:
@@ -51,13 +51,13 @@ To get started with Docker using Portainer and Docker Compose, follow these step
 6. Install portainer node (Web interface from where you manage your nodes or agents) :
 
    ```bash
-   sudo docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_stuff:/data portainer/portainer-ce:2.20.2
+   sudo docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_stuff:/data portainer/portainer-ce:2.21.0
    ```
 
 7. Install portainer agent (each agent that you will manage from the node, does not run web interface):
 
    ```bash
-   sudo docker run -d   -p 9001:9001   --name portainer_agent   --restart=always   -v /var/run/docker.sock:/var/run/docker.sock   -v /var/lib/docker/volumes:/var/lib/docker/volumes   portainer/agent:2.20.2
+   sudo docker run -d   -p 9001:9001   --name portainer_agent   --restart=always   -v /var/run/docker.sock:/var/run/docker.sock   -v /var/lib/docker/volumes:/var/lib/docker/volumes   portainer/agent:2.21.0
    ```
 
 8. Access the Portainer web interface by opening the following URL in your web browser: [https://localhost:9443](https://localhost:9443)

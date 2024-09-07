@@ -6,8 +6,8 @@ services:
     container_name: rclone_sync
     volumes:
       - /home/notolac/.config/rclone/rclone.conf:/config/rclone/rclone.conf
-      - /home/media/multimedia:/data/multimedia
-      - /home/media/Plex:/data/Plex
+      - /media/raid/multimedia:/data/multimedia
+      - /media/raid/Plex:/data/Plex
     entrypoint:
       [
         "/bin/sh",
