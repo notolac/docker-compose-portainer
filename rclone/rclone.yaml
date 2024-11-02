@@ -16,5 +16,4 @@ services:
       ]
     environment:
       - RCLONE_CONFIG=/config/rclone/rclone.conf
-    user: "${UID}:${GID}"
     restart: unless-stopped
