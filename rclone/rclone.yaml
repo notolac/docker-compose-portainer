@@ -7,8 +7,8 @@ services:
     volumes:
       - /home/notolac/.config/rclone/rclone.conf:/config/rclone/rclone.conf:ro
       - /home/notolac/scripts/rclone_entrypoint.sh:/entrypoint.sh:ro # Script para comandos rclone
-      - /media/raid/multimedia:/data/multimedia
-      - /media/raid/Plex:/data/Plex
+      - /media/multimedia:/data/multimedia
+      - /media/Plex:/data/Plex
     entrypoint: ["/bin/sh", "/entrypoint.sh"]
     environment:
       - RCLONE_CONFIG=/config/rclone/rclone.conf
