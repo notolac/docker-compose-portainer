@@ -1,5 +1,4 @@
 ---
-version: "2.1"
 services:
   netbootxyz:
     image: lscr.io/linuxserver/netbootxyz:latest

@@ -1,5 +1,3 @@
----
-version: "2.1"
 services:
   calibre-web:
     image: lscr.io/linuxserver/calibre-web:latest
@@ -11,8 +9,8 @@ services:
       - DOCKER_MODS=linuxserver/mods:universal-calibre #optional
       - OAUTHLIB_RELAX_TOKEN_SCOPE=1 #optional
     volumes:
-      - /media/raid/multimedia/config:/config
-      - /media/raid/multimedia/books:/books
+      - /media/multimedia/config:/config
+      - /media/multimedia/books:/books
     ports:
       - "$HOST_PORT1:8083"
     restart: unless-stopped
@@ -25,7 +23,7 @@ services:
       - PGID=1000
       - TZ=Europe/Madrid
     volumes:
-      - /home/media/books:/config
+      - /media/multimedia/books::/config
     ports:
       - "$HOST_PORT2:8080"
       - "$HOST_PORT3:8181"
