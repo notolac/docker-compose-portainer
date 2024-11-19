@@ -1,14 +1,13 @@
-version: "3.7"
 services:
   audiobookshelf:
     image: ghcr.io/advplyr/audiobookshelf:latest
     ports:
       - 13378:80
     volumes:
-      - /media/raid/multimedia/AudioLibros:/audiobooks
-      - /media/raid/multimedia/podcast:/podcasts
-      - /media/raid/multimedia/audiobookshelf/appconfig:/config
-      - /media/raid/multimedia/audiobookshelf/appmetadata:/metadata
+      - /media/multimedia/AudioLibros:/audiobooks
+      - /media/multimedia/podcast:/podcasts
+      - /media/multimedia/audiobookshelf/appconfig:/config
+      - /media/multimedia/audiobookshelf/appmetadata:/metadata
     restart: unless-stopped
     environment:
       - TZ=Europe/Madrid

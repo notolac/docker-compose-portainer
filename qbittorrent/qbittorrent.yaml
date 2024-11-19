@@ -11,7 +11,7 @@ services:
       - TORRENTING_PORT=6881
     volumes:
       - /home/notolac/qbittorrent:/config
-      - /media/raid/multimedia/radarr-downloads:/downloads
+      - /media/multimedia/radarr-downloads:/downloads
     ports:
       - 8080:8080
       - 6881:6881

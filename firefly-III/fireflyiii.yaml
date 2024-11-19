@@ -1,13 +1,8 @@
-version: "3.3"
-
-#
 # The Firefly III Data Importer will ask you for the Firefly III URL and a "Client ID".
 # You can generate the Client ID at http://localhost/profile (after registering)
 # The Firefly III URL is: http://app:8080
 #
 # Other URL's will give 500 | Server Error
-#
-
 services:
   app:
     image: fireflyiii/core:latest

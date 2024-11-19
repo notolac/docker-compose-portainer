@@ -1,5 +1,3 @@
-version: "3.5"
-
 # Example Docker Compose config file for PhotoPrism (Linux / AMD64)
 #
 # Note:
@@ -92,8 +90,8 @@ services:
       #  - "/dev/dri:/dev/dri"                         # Intel QSV
       - "/dev/nvidia0:/dev/nvidia0" # Nvidia CUDA
       - "/dev/nvidiactl:/dev/nvidiactl"
-      #  - "/dev/nvidia-modeset:/dev/nvidia-modeset"
-      #  - "/dev/nvidia-nvswitchctl:/dev/nvidia-nvswitchctl"
+      - "/dev/nvidia-modeset:/dev/nvidia-modeset"
+      - "/dev/nvidia-nvswitchctl:/dev/nvidia-nvswitchctl"
       - "/dev/nvidia-uvm:/dev/nvidia-uvm"
       - "/dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools"
     #  - "/dev/video11:/dev/video11"                 # Video4Linux Video Encode Device (h264_v4l2m2m)
@@ -101,10 +99,10 @@ services:
     ## Storage Folders: "~" is a shortcut for your home directory, "." for the current directory
     volumes:
       # "/host/folder:/photoprism/folder"                # Example
-      - "/media/raid/multimedia/PhotoPrism-fotos:/photoprism/originals" # Original media files (DO NOT REMOVE)
+      - "/media/multimedia/PhotoPrism-fotos:/photoprism/originals" # Original media files (DO NOT REMOVE)
       # - "/example/family:/photoprism/originals/family" # *Additional* media folders can be mounted like this
       # - "~/Import:/photoprism/import"                  # *Optional* base folder from which files can be imported to originals
-      - "/media/raid/multimedia/PhotoPrism-cache:/photoprism/storage" # *Writable* storage folder for cache, database, and sidecar files (DO NOT REMOVE)
+      - "/home/notolac/PhotoPrism-cache:/photoprism/storage" # *Writable* storage folder for cache, database, and sidecar files (DO NOT REMOVE)
 
   ## Database Server (recommended)
   ## see https://docs.photoprism.app/getting-started/faq/#should-i-use-sqlite-mariadb-or-mysql

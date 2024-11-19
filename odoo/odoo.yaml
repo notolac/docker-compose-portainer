@@ -1,5 +1,4 @@
 ---
-version: "3.1"
 services:
   web: #cambiar el numero de la web por cada instancia
     image: odoo:latest

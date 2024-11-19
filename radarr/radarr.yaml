@@ -1,5 +1,4 @@
 ---
-version: "2"
 services:
   radarr:
     image: linuxserver/radarr:latest
@@ -11,8 +10,8 @@ services:
       - PUID=1000 # for UserID
       - PGID=1000 # for GroupID
     volumes:
-      - /home/plex:/movies # Location of Movie library on disk (See note in Application setup)
-      - /home/media/radarr-downloads:/downloads # Location of download managers output directory (See note in Application setup)
+      - /media/Plex/Peliculas:/movies # Location of Movie library on disk (See note in Application setup)
+      - /media/multimedia/radarr-downloads:/downloads # Location of download managers output directory (See note in Application setup)
       - /home/notolac/radarr-data:/config # Database and Radarr configs
     ports:
       - 7878:7878/tcp # The port for the Radarr webinterface
