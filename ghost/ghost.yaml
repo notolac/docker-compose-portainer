@@ -16,7 +16,7 @@ services:
       # contrary to the default mentioned in the linked documentation, this image defaults to NODE_ENV=production (so development mode needs to be explicitly specified if desired)
       #NODE_ENV: development
     volumes:
-      - ghost:/var/lib/ghost/content
+      - ghost-web-data:/var/lib/ghost/content
 
   db:
     image: mysql:8.0
@@ -24,8 +24,18 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
     volumes:
-      - db:/var/lib/mysql
+      - ghost-db-data:/var/lib/mysql
 
 volumes:
-  ghost:
-  db:
+  ghost-web-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/notolac/ghost/ghost-web-data
+  ghost-db-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/notolac/ghost/ghost-db-data
