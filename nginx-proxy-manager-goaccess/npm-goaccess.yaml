@@ -8,8 +8,8 @@ services:
       - 8181:81
       - 443:443
     volumes:
-      - ./data:/data
-      - ./letsencrypt:/etc/letsencrypt
+      - data:/data
+      - letsencrypt:/etc/letsencrypt
       - /home/notolac/nginx-proxy-manager/_hsts.conf:/app/templates/_hsts.conf:ro
 
   goaccess:
@@ -35,3 +35,17 @@ services:
     volumes:
       - /home/notolac/nginx-proxy-manager/data/logs:/opt/log:ro #required - path to your Nginx Proxy Manager logs
       #- /path/to/host/custom:/opt/custom #optional, required if using log_type = CUSTOM #change to the location of your choice
+
+volumes:
+  data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/notolac/nginx-proxy-manager/data
+  letsencrypt:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/notolac/nginx-proxy-manager/letsencrypt
