@@ -17,8 +17,6 @@ services:
       #NODE_ENV: development
     volumes:
       - ghost-web-data:/var/lib/ghost/content
-    networks:
-      - ghost_net
 
   db:
     image: mysql:8.0
@@ -27,8 +25,6 @@ services:
       MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
     volumes:
       - ghost-db-data:/var/lib/mysql
-    networks:
-      - ghost_net
 
 volumes:
   ghost-web-data:
@@ -43,7 +39,3 @@ volumes:
       type: none
       o: bind
       device: /home/notolac/ghost/ghost-db-data
-
-networks:
-  ghost_net:
-    driver: overlay
