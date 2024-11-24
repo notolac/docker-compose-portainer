@@ -1,6 +1,6 @@
 services:
   app:
-    image: "docker.io/jc21/nginx-proxy-manager:latest"
+    image: "docker.io/jc21/nginx-proxy-manager:2.11.3"
     container_name: nginx-proxy
     restart: always
     ports:
@@ -8,8 +8,8 @@ services:
       - 8181:81
       - 443:443
     volumes:
-      - /home/notolac/nginx-proxy-manager/data:/data
-      - /home/notolac/nginx-proxy-manager/letsencrypt:/etc/letsencrypt
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
       - /home/notolac/nginx-proxy-manager/_hsts.conf:/app/templates/_hsts.conf:ro
 
   goaccess:
