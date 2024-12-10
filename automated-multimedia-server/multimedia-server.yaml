@@ -1,0 +1,161 @@
+---
+# Configuración global para valores por defecto
+x-defaults: &defaults
+  restart: unless-stopped
+
+services:
+  gluetun:
+    image: qmcgaw/gluetun
+    container_name: gluetun
+    <<: *defaults
+    hostname: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - 6881:6881
+      - 6881:6881/udp
+      - 8097:8097 # qbittorrent
+      - 8989:8989 # Sonarr
+      - 9696:9696 # Prowlarr
+      - 7878:7878 # Radarr
+      - 8686:8686 # Lidarr
+      - 8787:8787 # Readarr
+    volumes:
+      - /home/notolac/media-services/gluetun:/gluetun
+    environment:
+      - VPN_SERVICE_PROVIDER=protonvpn
+      - VPN_PORT_FORWARDING_PROVIDER=protonvpn
+      - VPN_TYPE=wireguard
+      - PORT_FORWARD_ONLY=on
+      - WIREGUARD_PRIVATE_KEY=$WIREGUARD_PRIVATE_KEY
+      - SERVER_COUNTRIES=Netherlands, Spain, Germany
+      - TZ=Europe/Madrid
+      - UPDATER_PERIOD=24h
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    <<: *defaults
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+      - WEBUI_PORT=8097
+      - TORRENTING_PORT=6881
+    volumes:
+      - /home/notolac/media-services/qbittorrent:/config
+      - /media/multimedia/downloads:/downloads
+    depends_on:
+      - gluetun
+    network_mode: "service:gluetun"
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.0"
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    <<: *defaults
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+    volumes:
+      - /home/notolac/media-services/prowlarr:/config
+    depends_on:
+      - gluetun
+    network_mode: "service:gluetun"
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    <<: *defaults
+    environment:
+      - UMASK_SET=022
+      - TZ=Europe/Madrid
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - /media/Plex/Peliculas:/movies
+      - /media/multimedia/downloads:/downloads
+      - /home/notolac/media-services/radarr:/config
+    depends_on:
+      - gluetun
+    network_mode: "service:gluetun"
+    deploy:
+      resources:
+        limits:
+          memory: 3g
+          cpus: "1.0"
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    <<: *defaults
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+    volumes:
+      - /home/notolac/media-services/sonarr:/config
+      - /media/Plex/Series:/tv
+      - /media/multimedia/downloads:/downloads
+    depends_on:
+      - gluetun
+    network_mode: "service:gluetun"
+    deploy:
+      resources:
+        limits:
+          memory: 3g
+          cpus: "1.0"
+
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    <<: *defaults
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+    volumes:
+      - /home/notolac/media-services/lidarr:/config
+      - /media/Plex/Music:/music
+      - /media/multimedia/downloads:/downloads
+    depends_on:
+      - gluetun
+    network_mode: "service:gluetun"
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
+
+  readarr:
+    image: lscr.io/linuxserver/readarr:develop
+    container_name: readarr
+    <<: *defaults
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Madrid
+    volumes:
+      - /home/notolac/media-services/readarr:/config
+      - /media/multimedia/books:/books
+      - /media/multimedia/downloads:/downloads
+    depends_on:
+      - gluetun
+    network_mode: "service:gluetun"
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
