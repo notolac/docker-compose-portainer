@@ -46,7 +46,7 @@ services:
       - TORRENTING_PORT=6881
     volumes:
       - /home/notolac/media-services/qbittorrent:/config
-      - /media/multimedia/downloads:/downloads
+      - /mnt/usb-035-1/downloads:/downloads
     depends_on:
       - gluetun
     network_mode: "service:gluetun"
