@@ -4,10 +4,17 @@ services:
     container_name: rclone_sync
     volumes:
       - /home/notolac/.config/rclone/rclone.conf:/config/rclone/rclone.conf:ro
-      - /home/notolac/scripts/rclone_entrypoint.sh:/entrypoint.sh:ro # Script para comandos rclone
+      - /home/notolac/scripts/rclone_entrypoint_backup.sh:/entrypoint_backup.sh:ro # Script para respaldo
+      - /home/notolac/scripts/rclone_entrypoint_restore.sh:/entrypoint_restore.sh:ro # Script para restauración
       - /media/multimedia:/data/multimedia
       - /media/Plex:/data/Plex
-    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    entrypoint:
+      [
+        "/bin/sh",
+        "-c",
+        'if [ "$RCLONE_MODE" = ''restore'' ]; then /entrypoint_restore.sh; else /entrypoint_backup.sh; fi',
+      ]
     environment:
       - RCLONE_CONFIG=/config/rclone/rclone.conf
+      - RCLONE_MODE=backup # Cambia a 'restore' si deseas ejecutar el script de restauración
     restart: unless-stopped
