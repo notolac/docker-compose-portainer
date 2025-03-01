@@ -6,7 +6,7 @@ services:
       - /home/user/.config/rclone/rclone.conf:/config/rclone/rclone.conf:ro
       - /home/user/scripts/rclone_entrypoint_backup.sh:/entrypoint_backup.sh:ro # Script para respaldo
       - /home/user/scripts/rclone_entrypoint_restore.sh:/entrypoint_restore.sh:ro # Script para restauración
-      - /media/multimedia:/data/multimedia
+      - /storage_hdd/multimedia:/data/multimedia
       - /media/Plex:/data/Plex
     entrypoint:
       [
