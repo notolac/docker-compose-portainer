@@ -3,7 +3,7 @@ services:
     image: rclone/rclone:latest
     container_name: rclone_sync
     volumes:
-      - /home/user/.config/rclone/rclone.conf:/config/rclone/rclone.conf:ro
+      - /home/user/.config/rclone/rclone.conf:/config/rclone/rclone.conf
       - /home/user/scripts/rclone_entrypoint_backup.sh:/entrypoint_backup.sh:ro # Script para respaldo
       - /home/user/scripts/rclone_entrypoint_restore.sh:/entrypoint_restore.sh:ro # Script para restauración
       - /storage_hdd/multimedia:/data/multimedia
