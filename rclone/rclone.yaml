@@ -16,5 +16,5 @@ services:
       ]
     environment:
       - RCLONE_CONFIG=/config/rclone/rclone.conf
-      - RCLONE_MODE=backup # Cambia a 'restore' si deseas ejecutar el script de restauración
+      - RCLONE_MODE=restore # Cambia a 'restore' si deseas ejecutar el script de restauración
     restart: unless-stopped
