@@ -3,7 +3,7 @@ services:
     image: rclone/rclone:latest
     container_name: rclone_sync
     volumes:
-      - /home/notolac/.config/rclone/rclone.conf:/config/rclone/rclone.conf:ro
+      - /home/notolac/.config/rclone/rclone.conf:/config/rclone/rclone.conf:rw
       - /home/notolac/scripts/rclone_entrypoint_backup.sh:/entrypoint_backup.sh:ro # Script para respaldo
       - /home/notolac/scripts/rclone_entrypoint_restore.sh:/entrypoint_restore.sh:ro # Script para restauración
       - /storage_hdd/multimedia:/data/multimedia
