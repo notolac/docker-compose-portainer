@@ -12,7 +12,7 @@ services:
       [
         "/bin/sh",
         "-c",
-        'if [ "$RCLONE_MODE" = ''restore'' ]; then /entrypoint_restore.sh; else /entrypoint_backup.sh; fi',
+        'echo ''RCLONE_MODE=''$RCLONE_MODE; if [ "$RCLONE_MODE" = ''restore'' ]; then /entrypoint_restore.sh; else /entrypoint_backup.sh; fi',
       ]
     environment:
       - RCLONE_CONFIG=/config/rclone/rclone.conf
