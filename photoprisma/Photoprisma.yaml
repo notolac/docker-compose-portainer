@@ -55,9 +55,9 @@ services:
       - "/dev/dri:/dev/dri" # Habilita VAAPI para aceleración de hardware en AMD
     working_dir: "/photoprism"
     volumes:
-      - "/media/multimedia/PhotoPrism-fotos:/photoprism/originals"
-      - "/mnt/usb-035-1/photoprism-import:/photoprism/import"
-      - "/home/notolac/PhotoPrism-cache:/photoprism/storage"
+      - "/storage_hdd/multimedia/PhotoPrism-fotos:/photoprism/originals"
+      - "/downloads/photoprism-import:/photoprism/import"
+      - "/media/PhotoPrism-cache:/photoprism/storage"
 
   ## Base de datos MariaDB
   mariadb:
