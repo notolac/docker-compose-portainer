@@ -3,11 +3,8 @@ services:
     image: louislam/uptime-kuma
     container_name: uptime-kuma
     volumes:
-      - kuma-slave-NFS:/app/data
+      - /home/notolac/uptime-kuma:/app/data
     ports:
       - $HOST_PORT:3001 # <Host Port>:<Container Port>
     restart: always
 
-volumes:
-  kuma-slave-NFS:
-    external: true
