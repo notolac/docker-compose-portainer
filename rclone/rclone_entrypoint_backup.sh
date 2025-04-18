@@ -10,6 +10,10 @@ while true; do
   # Sincronizar la carpeta local /media/Plex con Google Drive
   # Se asegura de que la versión en Google Drive sea un reflejo exacto de la local
   rclone -vv sync /data/Plex chiguire-bot-gdrive:/Plex
+
+  # Sincronizar la carpeta local /data/proxmox con Google Drive
+  # Se asegura de que la versión en Google Drive sea un reflejo exacto de la local
+  rclone -vv sync /data/proxmox chiguire-bot-gdrive:/proxmox
   
   # Esperar 24 horas antes de volver a ejecutar la sincronización
   # 86400 segundos = 24 horas
