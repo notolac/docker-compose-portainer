@@ -1,0 +1,14 @@
+services:
+  kms:
+    image: ghcr.io/py-kms-organization/py-kms:python3
+    ports:
+      - 1688:1688 # kms
+      - 8480:8080 # web-interface
+    environment:
+      IP: "::"
+      HWID: RANDOM
+      LOGLEVEL: INFO
+    restart: always
+    volumes:
+      - /home/notolac/kms-python/db:/home/py-kms/db
+      - /etc/localtime:/etc/localtime:ro

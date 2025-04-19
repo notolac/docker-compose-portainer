@@ -13,7 +13,7 @@ services:
     image: rustdesk/rustdesk-server:latest
     command: hbbs -r your.domain.com:21117
     volumes:
-      - ./data:/root
+      - /home/notolac/rustdesk/data:/root
     networks:
       - rustdesk-net
     depends_on:
@@ -28,7 +28,7 @@ services:
     image: rustdesk/rustdesk-server:latest
     command: hbbr
     volumes:
-      - ./data:/root
+      - /home/notolac/rustdesk/data:/root
     networks:
       - rustdesk-net
     restart: unless-stopped

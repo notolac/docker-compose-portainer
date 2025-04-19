@@ -9,8 +9,8 @@ services:
       - "8077:8069"
     volumes:
       - odoo-cliente-web:/var/lib/odoo
-      - ./config:/etc/odoo
-      - ./addons:/mnt/extra-addons
+      - /home/notolac/odoo/config:/etc/odoo
+      - /home/notolac/odoo/addons:/mnt/extra-addons
       #- /home/notolac/Odoo-Addons/:/var/lib/odoo/.local/share/Odoo/addons/16.0  # activa addons luego de activar la DB
     environment:
       - HOST=db #cambiar el numero de la DB por cada instancia
