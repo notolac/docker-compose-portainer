@@ -17,7 +17,7 @@ services:
       #NODE_ENV: development
     volumes:
       - ghost-web-data:/var/lib/ghost/content
-      #- /home/notolac/ghost/ghost-config/config.production.json:/var/lib/ghost/config.production.json
+      - /home/notolac/ghost/ghost-config/config.production.json:/var/lib/ghost/config.production.json
 
   db:
     image: mysql:8.0
