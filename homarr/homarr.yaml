@@ -5,12 +5,14 @@
 services:
   homarr:
     container_name: homarr
-    image: ghcr.io/ajnart/homarr:latest
+    image: ghcr.io/homarr-labs/homarr:latest
     restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # Optional, only if you want docker integration
       - /home/notolac/homarr/configs:/app/data/configs
       - /home/notolac/homarr/icons:/app/public/icons
       - /home/notolac/homarr/data:/data
+    environment:
+      - SECRET_ENCRYPTION_KEY=ab864fed774c0496230722a0af7ed17dfe4248e589fe985ce2f1fbd0ce846b93
     ports:
       - "7575:7575"
