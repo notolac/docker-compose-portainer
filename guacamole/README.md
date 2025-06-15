@@ -67,16 +67,32 @@ Luego de iniciar la base de datos, accede al panel de Nginx Proxy Manager. (Esta
 En la pestaña "Advanced", añade la siguiente configuración personalizada para asegurarte de que la ruta correcta se utiliza:
 
 ```nginx
-location / {
-    return 301 /guacamole/#/;
+# 1. Tamaño máximo de cuerpo (si subes archivos de configuración)
+client_max_body_size 64M;
+
+# 2. Raíz → guacamole
+location = / {
+    return 301 $scheme://$host/guacamole/;
 }
 
+# 3. Proxy a Guacamole
 location /guacamole/ {
-    proxy_pass http://hostip:port/guacamole/;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
+    # Proxy al API de Guacamole
+    proxy_pass http://10.0.1.10:8072/guacamole/;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade            $http_upgrade;
+    proxy_set_header Connection         "upgrade";
+
+    # Encabezados de cabecera original
+    proxy_set_header Host               $host;
+    proxy_set_header X-Real-IP          $remote_addr;
+    proxy_set_header X-Forwarded-For    $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto  $scheme;
+
+    # Desactivar buffering para peticiones largas
+    proxy_buffering         off;
+    proxy_read_timeout      36000s;
+    proxy_send_timeout      36000s;
 }
 ```
 
