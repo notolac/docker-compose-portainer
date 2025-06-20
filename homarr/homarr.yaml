@@ -11,6 +11,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock # Optional, only if you want docker integration
       - /home/notolac/homarr/data:/data
     environment:
-      - SECRET_ENCRYPTION_KEY="$SECRET_ENCRYPTION_KEY"
+      - SECRET_ENCRYPTION_KEY=$SECRET_ENCRYPTION_KEY
     ports:
       - "7575:7575"
