@@ -9,10 +9,8 @@ services:
     restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # Optional, only if you want docker integration
-      - /home/user/homarr/configs:/app/data/configs
-      - /home/user/homarr/icons:/app/public/icons
       - /home/user/homarr/data:/data
     environment:
-      - SECRET_ENCRYPTION_KEY=REDACTED
+      - SECRET_ENCRYPTION_KEY="$SECRET_ENCRYPTION_KEY"
     ports:
       - "7575:7575"
