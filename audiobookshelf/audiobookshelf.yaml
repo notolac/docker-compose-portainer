@@ -4,10 +4,10 @@ services:
     ports:
       - 13378:80
     volumes:
-      - /storage_hdd/multimedia/AudioLibros:/audiobooks
-      - /storage_hdd/multimedia/podcast:/podcasts
-      - /storage_hdd/multimedia/audiobookshelf/appconfig:/config
-      - /storage_hdd/multimedia/audiobookshelf/appmetadata:/metadata
+      - /srv/multimedia/AudioLibros:/audiobooks
+      - /srv/multimedia/podcast:/podcasts
+      - /srv/multimedia/audiobookshelf/appconfig:/config
+      - /srv/multimedia/audiobookshelf/appmetadata:/metadata
     restart: unless-stopped
     environment:
       - TZ=Europe/Madrid
