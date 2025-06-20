@@ -44,22 +44,29 @@ services:
       PHOTOPRISM_SITE_CAPTION: "CasRom Photos App"
       PHOTOPRISM_SITE_DESCRIPTION: ""
       PHOTOPRISM_SITE_AUTHOR: ""
-      ## Configuración para usar VAAPI con AMD:
-      PHOTOPRISM_FFMPEG_ENCODER: "vaapi"
+
+      # Configuración para usar NVIDIA GPU
+      PHOTOPRISM_FFMPEG_ENCODER: "nvidia"               # usar el encoder NVIDIA H.264 :contentReference[oaicite:0]{index=0}
       PHOTOPRISM_FFMPEG_SIZE: "1920"
       PHOTOPRISM_FFMPEG_BITRATE: "32"
-      ## Instalación de dependencias en el primer inicio:
-      PHOTOPRISM_INIT: "https gpu tensorflow"
-    ## Mapeo de dispositivos para soporte de GPU AMD:
-    devices:
-      - "/dev/dri:/dev/dri" # Habilita VAAPI para aceleración de hardware en AMD
+      PHOTOPRISM_INIT: "tensorflow-gpu"                 # instala TensorFlow GPU-optimizado :contentReference[oaicite:1]{index=1}
+      NVIDIA_VISIBLE_DEVICES: "all"                     # permite acceso a todas las GPUs :contentReference[oaicite:2]{index=2}
+      NVIDIA_DRIVER_CAPABILITIES: "all"                 # expone todas las capacidades GPU :contentReference[oaicite:3]{index=3}
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: "nvidia"
+              capabilities: [gpu]
+              count: 1                                # reserva 1 GPU NVIDIA :contentReference[oaicite:4]{index=4}
+
     working_dir: "/photoprism"
     volumes:
-      - "/storage_hdd/multimedia/PhotoPrism-fotos:/photoprism/originals"
-      - "/downloads/photoprism-import:/photoprism/import"
-      - "/media/PhotoPrism-cache:/photoprism/storage"
+      - "/srv/multimedia/PhotoPrism-fotos:/photoprism/originals"
+      - "/srv/downloads/photoprism-import:/photoprism/import"
+      - "/home/notolac/.tmp/PhotoPrism-cache:/photoprism/storage"
 
-  ## Base de datos MariaDB
   mariadb:
     image: mariadb:11
     restart: unless-stopped
@@ -67,7 +74,14 @@ services:
     security_opt:
       - seccomp:unconfined
       - apparmor:unconfined
-    command: --innodb-buffer-pool-size=512M --transaction-isolation=READ-COMMITTED --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --max-connections=512 --innodb-rollback-on-timeout=OFF --innodb-lock-wait-timeout=120
+    command: >
+      --innodb-buffer-pool-size=512M
+      --transaction-isolation=READ-COMMITTED
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --max-connections=512
+      --innodb-rollback-on-timeout=OFF
+      --innodb-lock-wait-timeout=120
     volumes:
       - "/home/notolac/photoprisma/database:/var/lib/mysql"
     environment:
