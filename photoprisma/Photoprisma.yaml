@@ -64,7 +64,7 @@ services:
     working_dir: "/photoprism"
     volumes:
       - "/srv/multimedia/PhotoPrism-fotos:/photoprism/originals"
-      - "/srv/downloads/photoprism-import:/photoprism/import"
+      - "/storage_hdd/photoprism-import:/photoprism/import"
       - "/home/notolac/.tmp/PhotoPrism-cache:/photoprism/storage"
 
   mariadb:
