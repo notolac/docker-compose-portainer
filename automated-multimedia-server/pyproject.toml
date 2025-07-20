@@ -1,0 +1,7 @@
+[project]
+name = "AUTOMATED-MULTIMEDIA-SERVER"
+version = "0.1.0"
+description = "Este es un script para automatizar la instalación de un servidor multimedia y otras herramientas"
+readme = "README.md"
+requires-python = ">=3.12.3"
+dependencies = []
