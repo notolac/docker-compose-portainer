@@ -1,0 +1,2 @@
+notion_client==2.4.0
+rich==14.0.0
