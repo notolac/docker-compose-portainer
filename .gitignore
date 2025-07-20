@@ -272,4 +272,21 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Ignore logs
+*.log
+
+# Ignore text files
+*.txt
+
+# Ignore CSV files
+*.csv
+
+# Ignore JSON files
+*.json
+
+# Python virtual environment
+.venv/
+
 # End of https://www.toptal.com/developers/gitignore/api/go,vim,pycharm,terraform,visualstudiocode,macos,windows
+
+!requirements.txt
