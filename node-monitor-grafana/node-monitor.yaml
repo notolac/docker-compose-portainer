@@ -1,9 +1,4 @@
-volumes:
-  grafana-data:
-    driver: local
-  prometheus-data:
-    driver: local
-
+---
 services:
   prometheus:
     image: prom/prometheus:latest
@@ -12,7 +7,7 @@ services:
       - $HOST_1PORT:9090
     volumes:
       - /etc/prometheus:/etc/prometheus
-      - prometheus-data:/prometheus
+      - /home/notolac/node-monitor-grafana/prometheus-data:/prometheus
     command: "--config.file=/etc/prometheus/prometheus.yml"
     restart: unless-stopped
 
@@ -22,7 +17,7 @@ services:
     ports:
       - $HOST_2PORT:3000
     volumes:
-      - grafana-data:/var/lib/grafana
+      - /home/notolac/node-monitor-grafana/grafana-data:/var/lib/grafana
     restart: unless-stopped
 
   node_exporter:
