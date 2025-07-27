@@ -7,7 +7,6 @@ services:
       - /home/notolac/scripts/rclone_entrypoint_backup.sh:/backup.sh:ro
       - /home/notolac/scripts/rclone_entrypoint_restore.sh:/restore.sh:ro
       - /srv/multimedia:/data/multimedia
-      - /srv/iso:/data/proxmox
       - /srv/Plex:/data/Plex
     entrypoint: ["/bin/sh", "-c", "/$RCLONE_SCRIPT.sh"]
     environment:
