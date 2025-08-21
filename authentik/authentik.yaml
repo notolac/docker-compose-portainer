@@ -83,5 +83,5 @@ services:
 
 networks:
   default:
-    name: edge
     external: true
+    name: traefik-stack
