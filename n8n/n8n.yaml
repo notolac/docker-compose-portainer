@@ -1,7 +1,7 @@
 ---
 services:
   n8n:
-    name: n8n-server
+    container_name: n8n-server
     image: docker.n8n.io/n8nio/n8n:1.107.4
     platform: linux/amd64
     restart: unless-stopped
@@ -34,13 +34,13 @@ services:
 
   # Runner externo (misma imagen, comando diferente)
   n8n-runner:
-    name: n8n-runner
+    container_name: n8n-runner
     image: docker.n8n.io/n8nio/n8n:1.107.4
     platform: linux/amd64
     command: ["/usr/local/bin/task-runner-launcher", "javascript"]
     restart: unless-stopped
     depends_on:
-      - n8n
+      - n8n-server
     environment:
       - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
       - TZ=${GENERIC_TIMEZONE}
