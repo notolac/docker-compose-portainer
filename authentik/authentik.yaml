@@ -53,8 +53,8 @@ services:
       AUTHENTIK_REDIS__HOST: redis
       AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:?secret key required}
     volumes:
-      - ${AUTHENTIK_DIR}/media:/media
-      - ${AUTHENTIK_DIR}/custom-templates:/templates
+      - ${AUTHENTIK_DIR}/server/media:/media
+      - ${AUTHENTIK_DIR}/server/custom-templates:/templates
     labels:
       - traefik.enable=true
       - traefik.http.routers.authentik.rule=Host(`${AUTHENTIK_DOMAIN}`)
@@ -83,6 +83,6 @@ services:
       AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:?secret key required}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ${AUTHENTIK_DIR}/media:/media
-      - ${AUTHENTIK_DIR}/certs:/certs
-      - ${AUTHENTIK_DIR}/custom-templates:/templates
+      - ${AUTHENTIK_DIR}/worker/media:/media
+      - ${AUTHENTIK_DIR}/worker/certs:/certs
+      - ${AUTHENTIK_DIR}/worker/custom-templates:/templates
