@@ -1,7 +1,7 @@
 ---
 services:
   n8n:
-    name: n8n
+    name: n8n-server
     image: docker.n8n.io/n8nio/n8n:1.107.4
     platform: linux/amd64
     restart: unless-stopped
@@ -34,6 +34,7 @@ services:
 
   # Runner externo (misma imagen, comando diferente)
   n8n-runner:
+    name: n8n-runner
     image: docker.n8n.io/n8nio/n8n:1.107.4
     platform: linux/amd64
     command: ["/usr/local/bin/task-runner-launcher", "javascript"]
