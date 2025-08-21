@@ -102,3 +102,14 @@ services:
       - ${PROMTAIL_CFG}:/etc/promtail/config.yml:ro
       - ${TRAEFIK_LOG_DIR}:/var/log/traefik:ro
       - ${PROMTAIL_POS_DIR}:/tmp
+
+  whoami:
+    image: traefik/whoami:v1.10
+    restart: unless-stopped
+    networks: ["traefik-stack","edge"]
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.who.rule=Host(`whoami.notolac.org`)
+      - traefik.http.routers.who.entrypoints=websecure
+      - traefik.http.routers.who.tls.certresolver=cf_all
+      - traefik.http.routers.who.middlewares=secureHeaders
