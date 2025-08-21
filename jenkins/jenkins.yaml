@@ -1,0 +1,10 @@
+---
+services:
+  jenkins:
+    image: jenkins/jenkins:lts
+    ports:
+      - "${JENKINS_HTTP_PORT:-8087}:8080"
+    volumes:
+      - ${JENKINS_HOME:-/srv/jenkins}:/var/jenkins_home
+  ssh-agent:
+    image: jenkins/ssh-agent
