@@ -42,7 +42,14 @@ services:
       - ${LETSENCRYPT_DIR}:/letsencrypt
       - ${TRAEFIK_LOG_DIR}:/logs
       - ${TRAEFIK_CFG_DIR}:/etc/traefik/dynamic:ro
-
+    labels:
+      - traefik.enable=true
+      # Router del dashboard (api@internal) protegido por Authentik
+      - traefik.http.routers.traefik.rule=Host(`${TRAEFIK_HOST}`)
+      - traefik.http.routers.traefik.entrypoints=websecure
+      - traefik.http.routers.traefik.tls.certresolver=cf_all
+      - traefik.http.routers.traefik.service=api@internal
+      - traefik.http.routers.traefik.middlewares=secureHeaders@file,authentikForwardAuth@file
 
   goaccess:
     image: allinurl/goaccess:latest
