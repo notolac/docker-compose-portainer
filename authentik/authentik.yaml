@@ -55,7 +55,7 @@ services:
       - traefik.enable=true
       - traefik.http.routers.authentik.rule=Host(`${AUTHENTIK_DOMAIN}`)
       - traefik.http.routers.authentik.entrypoints=websecure
-      - traefik.http.routers.authentik.tls.certresolver=cf_all
+      - traefik.http.routers.authentik.tls.certresolver=letsencrypt
       - traefik.http.services.authentik.loadbalancer.server.port=9000
 
   worker:
@@ -80,3 +80,8 @@ services:
       - ${AUTHENTIK_DIR}/worker/media:/media
       - ${AUTHENTIK_DIR}/worker/certs:/certs
       - ${AUTHENTIK_DIR}/worker/custom-templates:/templates
+
+networks:
+  default:
+    name: edge
+    external: true
