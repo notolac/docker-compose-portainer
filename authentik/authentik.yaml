@@ -58,13 +58,15 @@ services:
       # --- SSO principal
       - "traefik.http.routers.authentik.rule=Host(`${AUTHENTIK_DOMAIN}`)"
       - "traefik.http.routers.authentik.entrypoints=websecure"
-      - "traefik.http.routers.authentik.tls.certresolver=cf_all"
+      - "traefik.http.routers.authentik.tls=true"
+      - "traefik.http.routers.authentik.tls.certresolver=cloudflare"
       - "traefik.http.routers.authentik.service=authentik"
       - "traefik.http.services.authentik.loadbalancer.server.port=9000"
       # --- Outpost servido
       - "traefik.http.routers.ak-outpost.rule=Host(`${TRAEFIK_HOST}`) && PathPrefix(`/outpost.goauthentik.io/`)"
       - "traefik.http.routers.ak-outpost.entrypoints=websecure"
-      - "traefik.http.routers.ak-outpost.tls.certresolver=cf_all"
+      - "traefik.http.routers.ak-outpost.tls=true"
+      - "traefik.http.routers.ak-outpost.tls.certresolver=cloudflare"
       - "traefik.http.routers.ak-outpost.service=ak-outpost"
       - "traefik.http.services.ak-outpost.loadbalancer.server.port=9000"
 
