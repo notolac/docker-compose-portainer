@@ -94,7 +94,7 @@ services:
   whoami:
     image: traefik/whoami:v1.10
     restart: unless-stopped
-    networks: ["traefik-stack","edge"]
+    networks: ["default","edge"]
     labels:
       - traefik.enable=true
       - traefik.http.routers.who.rule=Host(`whoami.notolac.org`)
