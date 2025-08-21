@@ -35,26 +35,14 @@ services:
       - --accesslog.filepath=/logs/access.log
       - --accesslog.bufferingsize=100
       - --log.level=INFO
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ${LETSENCRYPT_DIR}:/letsencrypt
       - ${TRAEFIK_LOG_DIR}:/logs
       - ${TRAEFIK_CFG_DIR}:/etc/traefik/dynamic:ro
-    labels:
-      # Middlewares de seguridad (equivalente a tu _hsts.conf)
-      - traefik.http.middlewares.secureHeaders.headers.stsSeconds=63072000
-      - traefik.http.middlewares.secureHeaders.headers.stsIncludeSubdomains=true
-      - traefik.http.middlewares.secureHeaders.headers.stsPreload=true
-      - traefik.http.middlewares.secureHeaders.headers.contentTypeNosniff=true
-      - traefik.http.middlewares.secureHeaders.headers.customResponseHeaders.X-XSS-Protection=1; mode=block
-      - traefik.http.middlewares.secureHeaders.headers.frameDeny=true
-      - traefik.http.middlewares.secureHeaders.headers.referrerPolicy=strict-origin-when-cross-origin
-      - traefik.http.middlewares.secureHeaders.headers.customResponseHeaders.Content-Security-Policy=upgrade-insecure-requests
-      - traefik.http.middlewares.secureHeaders.headers.customResponseHeaders.Permissions-Policy=interest-cohort=()
-      - traefik.http.middlewares.secureHeaders.headers.customResponseHeaders.Expect-CT=enforce; max-age=604800
-      - traefik.http.middlewares.secureHeaders.headers.customResponseHeaders.Server=Proxy
-      - traefik.http.middlewares.ratelimit.ratelimit.average=100
-      - traefik.http.middlewares.ratelimit.ratelimit.burst=200
+
 
   goaccess:
     image: allinurl/goaccess:latest
@@ -106,10 +94,11 @@ services:
   whoami:
     image: traefik/whoami:v1.10
     restart: unless-stopped
-    networks: ["default","edge"]
+    networks: ["traefik-stack","edge"]
     labels:
       - traefik.enable=true
       - traefik.http.routers.who.rule=Host(`whoami.notolac.org`)
       - traefik.http.routers.who.entrypoints=websecure
       - traefik.http.routers.who.tls.certresolver=cf_all
-      - traefik.http.routers.who.middlewares=secureHeaders
+      - traefik.http.routers.who.middlewares=secureHeaders@file,rateLimit@file
+
