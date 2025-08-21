@@ -63,12 +63,12 @@ services:
       - "traefik.http.routers.authentik.service=authentik"
       - "traefik.http.services.authentik.loadbalancer.server.port=9000"
       # --- Outpost servido
-      - "traefik.http.routers.ak-outpost.rule=Host(`${TRAEFIK_HOST}`) && PathPrefix(`/outpost.goauthentik.io/`)"
-      - "traefik.http.routers.ak-outpost.entrypoints=websecure"
-      - "traefik.http.routers.ak-outpost.tls=true"
-      - "traefik.http.routers.ak-outpost.tls.certresolver=cloudflare"
-      - "traefik.http.routers.ak-outpost.service=ak-outpost"
-      - "traefik.http.services.ak-outpost.loadbalancer.server.port=9000"
+      #- "traefik.http.routers.ak-outpost.rule=Host(`${TRAEFIK_HOST}`) && PathPrefix(`/outpost.goauthentik.io/`)"
+      #- "traefik.http.routers.ak-outpost.entrypoints=websecure"
+      #- "traefik.http.routers.ak-outpost.tls=true"
+      #- "traefik.http.routers.ak-outpost.tls.certresolver=cloudflare"
+      #- "traefik.http.routers.ak-outpost.service=ak-outpost"
+      #- "traefik.http.services.ak-outpost.loadbalancer.server.port=9000"
 
   worker:
     image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG:-2025.8.0}
