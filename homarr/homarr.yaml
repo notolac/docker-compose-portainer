@@ -7,10 +7,27 @@ services:
     container_name: homarr
     image: ghcr.io/homarr-labs/homarr:latest
     restart: unless-stopped
+    networks:
+      - traefik-stack
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock # Optional, only if you want docker integration
+      - /var/run/docker.sock:/var/run/docker.sock
       - /home/notolac/homarr/data:/appdata
     environment:
-      - SECRET_ENCRYPTION_KEY=$SECRET_ENCRYPTION_KEY
-    ports:
-      - "7575:7575"
+      - SECRET_ENCRYPTION_KEY=${SECRET_ENCRYPTION_KEY}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-stack"
+
+      # Router Homarr
+      - "traefik.http.routers.homarr.rule=Host(`home.notolac.org`)"
+      - "traefik.http.routers.homarr.entrypoints=websecure"
+      - "traefik.http.routers.homarr.tls.certresolver=cf_all"
+      - "traefik.http.routers.homarr.middlewares=secureHeaders@file"
+
+      # Service Homarr
+      - "traefik.http.routers.homarr.service=homarr"
+      - "traefik.http.services.homarr.loadbalancer.server.port=7575"
+
+networks:
+  traefik-stack:
+    external: true
