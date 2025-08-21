@@ -54,11 +54,17 @@ services:
       - ${AUTHENTIK_DIR}/server/media:/media
       - ${AUTHENTIK_DIR}/server/custom-templates:/templates
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.authentik.rule=Host(`${AUTHENTIK_DOMAIN}`)
-      - traefik.http.routers.authentik.entrypoints=websecure
-      - traefik.http.routers.authentik.tls.certresolver=letsencrypt
-      - traefik.http.services.authentik.loadbalancer.server.port=9000
+      - "traefik.enable=true"
+      # tu router principal para sso
+      - "traefik.http.routers.authentik.rule=Host(`${AUTHENTIK_DOMAIN}`)"
+      - "traefik.http.routers.authentik.entrypoints=websecure"
+      - "traefik.http.routers.authentik.tls.certresolver=cf_all"
+      - "traefik.http.services.authentik.loadbalancer.server.port=9000"
+      # Router para el outpost *en el mismo host que el dashboard*
+      - "traefik.http.routers.ak-outpost.rule=Host(`${TRAEFIK_HOST}`) && PathPrefix(`/outpost.goauthentik.io/`)"
+      - "traefik.http.routers.ak-outpost.entrypoints=websecure"
+      - "traefik.http.routers.ak-outpost.tls.certresolver=cf_all"
+      - "traefik.http.services.ak-outpost.loadbalancer.server.port=9000"
 
   worker:
     image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG:-2025.8.0}
