@@ -107,6 +107,7 @@ services:
       - traefik.enable=true
       - traefik.http.routers.who.rule=Host(`whoami.notolac.org`)
       - traefik.http.routers.who.entrypoints=websecure
-      - traefik.http.routers.who.tls.certresolver=cf_all
+      - traefik.http.routers.who.tls=true
+      - traefik.http.routers.who.tls.certresolver=cloudflare
       - traefik.http.routers.who.middlewares=secureHeaders@file,rateLimit@file
 
