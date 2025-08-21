@@ -1,7 +1,8 @@
 ---
 networks:
   edge:
-    external: true
+    driver: bridge
+    attachable: true
   default:
     name: traefik-stack
 
