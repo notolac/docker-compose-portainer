@@ -9,7 +9,7 @@ services:
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
       - N8N_HOST=${N8N_HOST}
       - N8N_PORT=${N8N_PORT:-5678}
-      - N8N_PROTOCOL=https
+      - N8N_PROTOCOL=http
       - N8N_RUNNERS_ENABLED=true
       - NODE_ENV=production
       - WEBHOOK_URL=${WEBHOOK_URL}
