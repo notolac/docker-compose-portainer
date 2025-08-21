@@ -1,7 +1,9 @@
 ---
 services:
   n8n:
-    image: docker.n8n.io/n8nio/n8n
+    name: n8n
+    image: docker.n8n.io/n8nio/n8n:1.107.4
+    platform: linux/amd64
     restart: unless-stopped
     ports:
       - "${N8N_HTTP_PORT:-5678}:${N8N_PORT:-5678}"
@@ -25,18 +27,19 @@ services:
       # - NODE_FUNCTION_ALLOW_EXTERNAL=
       # - NODE_FUNCTION_ALLOW_BUILTIN=
       # Telemetría (opcional desactivar):
-      # - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_DIAGNOSTICS_ENABLED=false
     volumes:
       - ${N8N_DATA_DIR:-/srv/n8n}:/home/node/.n8n
     # No es necesario exponer el puerto 5679 del broker: la red interna del compose lo resuelve
 
   # Runner externo (misma imagen, comando diferente)
   n8n-runner:
-    image: docker.n8n.io/n8nio/n8n
+    image: docker.n8n.io/n8nio/n8n:1.107.4
+    platform: linux/amd64
+    command: ["/usr/local/bin/task-runner-launcher", "javascript"]
     restart: unless-stopped
     depends_on:
       - n8n
-    command: ["/usr/local/bin/task-runner-launcher", "javascript"]
     environment:
       - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
       - TZ=${GENERIC_TIMEZONE}
