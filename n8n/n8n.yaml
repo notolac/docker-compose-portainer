@@ -40,7 +40,7 @@ services:
     command: ["/usr/local/bin/task-runner-launcher", "javascript"]
     restart: unless-stopped
     depends_on:
-      - n8n-server
+      - n8n
     environment:
       - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
       - TZ=${GENERIC_TIMEZONE}
