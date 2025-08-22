@@ -66,6 +66,8 @@ services:
       touch /logs/access.log &&
       goaccess /logs/access.log
       --log-format=COMBINED
+      --date-format=%d/%b/%Y
+      --time-format=%T
       --real-time-html
       --daemonize
       --ws-url=ws://0.0.0.0:${GOA_PORT}
@@ -78,6 +80,7 @@ services:
       tail -f /dev/null"
     volumes:
       - ${TRAEFIK_LOG_DIR}:/logs:ro
+
 
   loki:
     image: grafana/loki:3.5.3
