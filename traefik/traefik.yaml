@@ -56,13 +56,12 @@ services:
   goaccess:
     image: allinurl/goaccess:latest
     restart: unless-stopped
-    depends_on: [traefik]
     networks: [default]
     ports:
-      - "${GOA_PORT}:${GOA_PORT}"
+      - "${GOA_PORT:-7880}:7880"          # WS interno (si ya tienes GOA_PORT, úsalo)
     volumes:
       - ${TRAEFIK_LOG_DIR}:/logs:ro
-      - ${TRAEFIK_LOG_DIR}/goaccess:/work   # <-- carpeta para index.html
+      - ${TRAEFIK_LOG_DIR}/goaccess:/work
     command:
       - /logs/access.log
       - --log-format=%h\ %^\ %^\ \[%d:%t\ %^\]\ \"%r\"\ %s\ %b\ \"%R\"\ \"%u\"\ %^\ \"%^\"\ \"%^\"\ %T
@@ -70,20 +69,23 @@ services:
       - --time-format=%T
       - --real-time-html
       - --output=/work/index.html
-      - --ws-url=ws://${GOA_ADDR}:${GOA_PORT}
-      - --addr=0.0.0.0   
-      - --port=${GOA_PORT}
+      - --ws-url=ws://${GOA_ADDR}:7880      # <-- IP del host y puerto WS
+      - --addr=0.0.0.0
+      - --port=7880
       - --html-report-title=Traefik\ Access\ \(GoAccess\)
       - --keep-last=90
       - --persist
-      - --debug-file=/work/goaccess-debug.log
+  
+  goaccess-www:
+    image: nginx:alpine
+    restart: unless-stopped
+    networks: [default]
+    ports:
+      - "7881:80"                         # HTTP LAN para el HTML
+    volumes:
+      - ${TRAEFIK_LOG_DIR}/goaccess:/usr/share/nginx/html:ro
+
     
-
-
-    
-    
-
-
 
   loki:
     image: grafana/loki:3.5.3
