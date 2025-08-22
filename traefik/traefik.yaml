@@ -63,7 +63,6 @@ services:
     volumes:
       - ${TRAEFIK_LOG_DIR}:/logs:ro
     command:
-      - goaccess
       - /logs/access.log
       - --log-format=%h\ %^\ %^\ \[%d:%t\ %^\]\ \"%r\"\ %s\ %b\ \"%R\"\ \"%u\"\ %^\ \"%^\"\ \"%^\"\ %T
       - --date-format=%d/%b/%Y
@@ -75,6 +74,7 @@ services:
       - --html-report-title=Traefik\ Access\ \(GoAccess\)
       - --keep-last=90
       - --persist
+
     
     
 
