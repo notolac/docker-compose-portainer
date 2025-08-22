@@ -69,14 +69,14 @@ services:
       - --date-format=%d/%b/%Y
       - --time-format=%T
       - --real-time-html
-      - --daemonize
       - --ws-url=ws://0.0.0.0:${GOA_PORT}
       - --addr=${GOA_ADDR}
       - --port=${GOA_PORT}
       - --html-report-title=Traefik\ Access\ \(GoAccess\)
       - --keep-last=90
       - --persist
-
+    
+    
 
 
 
