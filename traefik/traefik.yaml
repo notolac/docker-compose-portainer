@@ -64,10 +64,14 @@ services:
       /bin/sh -c "
       mkdir -p /work &&
       touch /logs/access.log &&
+      cat >/etc/goaccess/goaccess.conf <<EOF
+      log-format %h %^ %^ [%d:%t %^] \"%r\" %s %b \"%R\" \"%u\" %^ \"%^\" \"%^\" %T
+      date-format %d/%b/%Y
+      time-format %H:%M:%S
+      EOF
+      &&
       goaccess /logs/access.log
-      --log-format='%h %^ %^ [%d:%t %^] \"%r\" %s %b \"%^\" \"%^\" %^ \"%^\" \"%^\" %T'
-      --date-format=%d/%b/%Y
-      --time-format=%T
+      --config-file=/etc/goaccess/goaccess.conf
       --real-time-html
       --daemonize
       --ws-url=ws://0.0.0.0:${GOA_PORT}
@@ -80,6 +84,7 @@ services:
       tail -f /dev/null"
     volumes:
       - ${TRAEFIK_LOG_DIR}:/logs:ro
+
 
   loki:
     image: grafana/loki:3.5.3
