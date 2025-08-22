@@ -71,7 +71,7 @@ services:
       - --real-time-html
       - --output=/work/index.html
       - --ws-url=ws://${GOA_ADDR}:${GOA_PORT}
-      - --addr=${GOA_ADDR}
+      - --addr=0.0.0.0   
       - --port=${GOA_PORT}
       - --html-report-title=Traefik\ Access\ \(GoAccess\)
       - --keep-last=90
