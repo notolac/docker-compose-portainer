@@ -60,23 +60,23 @@ services:
     networks: [default]
     ports:
       - "${GOA_PORT}:${GOA_PORT}"
-    command: >
-      /bin/sh -c "
-      test -s /logs/access.log || touch /logs/access.log ;
-      goaccess /logs/access.log
-      --config-file=/etc/goaccess/goaccess.conf
-      --real-time-html
-      --daemonize
-      --ws-url=ws://0.0.0.0:${GOA_PORT}
-      --addr=${GOA_ADDR}
-      --port=${GOA_PORT}
-      --html-report-title='Traefik Access (GoAccess)'
-      --keep-last=90
-      --persist
-      && tail -f /dev/null"
     volumes:
       - ${TRAEFIK_LOG_DIR}:/logs:ro
-      - ${TRAEFIK_LOG_DIR}/goaccess/goaccess.conf:/etc/goaccess/goaccess.conf:ro
+    command:
+      - goaccess
+      - /logs/access.log
+      - --log-format=%h\ %^\ %^\ \[%d:%t\ %^\]\ \"%r\"\ %s\ %b\ \"%R\"\ \"%u\"\ %^\ \"%^\"\ \"%^\"\ %T
+      - --date-format=%d/%b/%Y
+      - --time-format=%T
+      - --real-time-html
+      - --daemonize
+      - --ws-url=ws://0.0.0.0:${GOA_PORT}
+      - --addr=${GOA_ADDR}
+      - --port=${GOA_PORT}
+      - --html-report-title=Traefik\ Access\ \(GoAccess\)
+      - --keep-last=90
+      - --persist
+
 
 
 
