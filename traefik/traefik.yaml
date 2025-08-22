@@ -62,14 +62,7 @@ services:
       - "${GOA_PORT}:${GOA_PORT}"
     command: >
       /bin/sh -c "
-      mkdir -p /work &&
-      touch /logs/access.log &&
-      cat >/etc/goaccess/goaccess.conf <<EOF
-      log-format %h %^ %^ [%d:%t %^] \"%r\" %s %b \"%R\" \"%u\" %^ \"%^\" \"%^\" %T
-      date-format %d/%b/%Y
-      time-format %H:%M:%S
-      EOF
-      &&
+      test -s /logs/access.log || touch /logs/access.log ;
       goaccess /logs/access.log
       --config-file=/etc/goaccess/goaccess.conf
       --real-time-html
@@ -80,10 +73,11 @@ services:
       --html-report-title='Traefik Access (GoAccess)'
       --keep-last=90
       --persist
-      &&
-      tail -f /dev/null"
+      && tail -f /dev/null"
     volumes:
       - ${TRAEFIK_LOG_DIR}:/logs:ro
+      - ${TRAEFIK_LOG_DIR}/goaccess/goaccess.conf:/etc/goaccess/goaccess.conf:ro
+
 
 
   loki:
