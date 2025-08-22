@@ -62,18 +62,22 @@ services:
       - "${GOA_PORT}:${GOA_PORT}"
     volumes:
       - ${TRAEFIK_LOG_DIR}:/logs:ro
+      - ${TRAEFIK_LOG_DIR}/goaccess:/work   # <-- carpeta para index.html
     command:
+      # ENTRYPOINT ya es 'goaccess', así que solo args:
       - /logs/access.log
       - --log-format=%h\ %^\ %^\ \[%d:%t\ %^\]\ \"%r\"\ %s\ %b\ \"%R\"\ \"%u\"\ %^\ \"%^\"\ \"%^\"\ %T
       - --date-format=%d/%b/%Y
       - --time-format=%T
       - --real-time-html
-      - --ws-url=ws://0.0.0.0:${GOA_PORT}
-      - --addr=${GOA_ADDR}
+      - --output=/work/index.html           # <-- archivo HTML a servir
+      - --ws-url=ws://0.0.0.0:${GOA_PORT}   # <-- accedes directo por puerto → ws://
+      - --addr=${GOA_ADDR}                  # típicamente 0.0.0.0
       - --port=${GOA_PORT}
       - --html-report-title=Traefik\ Access\ \(GoAccess\)
       - --keep-last=90
       - --persist
+
 
     
     
