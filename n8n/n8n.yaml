@@ -5,14 +5,14 @@ services:
     image: docker.n8n.io/n8nio/n8n:1.107.4
     platform: linux/amd64
     restart: unless-stopped
-    ports:
-      - "${N8N_HTTP_PORT:-5678}:${N8N_PORT:-5678}"
+    networks:
+      - traefik-stack
     environment:
-      # —— Core de n8n expuesto detrás de NPM ——
+      # —— Core de n8n publicado por Traefik ——
       - NODE_ENV=production
-      - N8N_HOST=${N8N_HOST}
+      - N8N_HOST=${N8N_HOST}               # <— dominio público
       - N8N_PORT=${N8N_PORT:-5678}
-      - N8N_PROTOCOL=http                 # TLS lo termina NPM
+      - N8N_PROTOCOL=https                       # <— Traefik termina TLS
       - WEBHOOK_URL=${WEBHOOK_URL}
       - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
       - TZ=${GENERIC_TIMEZONE}
@@ -23,16 +23,21 @@ services:
       - N8N_RUNNERS_MODE=external
       - N8N_RUNNERS_AUTH_TOKEN=${N8N_RUNNERS_AUTH_TOKEN}
       - N8N_RUNNERS_BROKER_LISTEN_ADDRESS=0.0.0.0
-      # (opcional) endurecimiento para Code node:
-      # - NODE_FUNCTION_ALLOW_EXTERNAL=
-      # - NODE_FUNCTION_ALLOW_BUILTIN=
       # Telemetría (opcional desactivar):
       - N8N_DIAGNOSTICS_ENABLED=false
     volumes:
       - ${N8N_DATA_DIR:-/srv/n8n}:/home/node/.n8n
-    # No es necesario exponer el puerto 5679 del broker: la red interna del compose lo resuelve
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-stack"
+      # Router
+      - "traefik.http.routers.n8n.rule=Host(`${N8N_HOST}`)"
+      - "traefik.http.routers.n8n.entrypoints=websecure"
+      - "traefik.http.routers.n8n.tls.certresolver=cloudflare"
+      - "traefik.http.routers.n8n.middlewares=secureHeaders@file"
+      - "traefik.http.services.n8n.loadbalancer.server.port=${N8N_PORT:-5678}"
 
-  # Runner externo (misma imagen, comando diferente)
+  # Runner externo (no expuesto por Traefik)
   n8n-runner:
     container_name: n8n-runner
     image: docker.n8n.io/n8nio/n8n:1.107.4
@@ -47,3 +52,10 @@ services:
       - N8N_RUNNERS_TASK_BROKER_URI=http://n8n:5679
       - N8N_RUNNERS_MAX_CONCURRENCY=${N8N_RUNNERS_MAX_CONCURRENCY:-5}
       - N8N_RUNNERS_AUTO_SHUTDOWN_TIMEOUT=${N8N_RUNNERS_AUTO_SHUTDOWN_TIMEOUT:-15}
+    networks:
+      - traefik-stack
+
+networks:
+  traefik-stack:
+    external: true
+
