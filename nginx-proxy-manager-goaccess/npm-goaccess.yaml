@@ -35,6 +35,7 @@ services:
     volumes:
       #- /home/notolac/nginx-proxy-manager/data/logs:/opt/log:ro #required - path to your Nginx Proxy Manager logs
       - /home/notolac/traefik-stack/traefik/logs:/opt/custom #optional, required if using log_type = CUSTOM #change to the location of your choice
+      - /home/notolac/traefik-stack/traefik/logs/goaccess:/work #optional, required if using log_type = CUSTOM #change to the location of your choice
 
 #volumes:
 #  data:
