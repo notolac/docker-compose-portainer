@@ -26,16 +26,16 @@ services:
       - BASIC_AUTH_USERNAME= #optional
       - BASIC_AUTH_PASSWORD= #optional
       - EXCLUDE_IPS=127.0.0.1 #optional - comma delimited
-      - LOG_TYPE=CUSTOM #optional - NPM or CUSTOM
+      - LOG_TYPE=TRAEFIK #optional - NPM or CUSTOM
       - ENABLE_BROWSERS_LIST=True #optional - more information below
       - CUSTOM_BROWSERS=Kuma:Uptime,TestBrowser:Crawler #optional - comma delimited, more information below
       - HTML_REFRESH=5 #optional - Refresh the HTML report every X seconds. https://goaccess.io/man
       - KEEP_LAST=90 #optional - Keep the last specified number of days in storage. https://goaccess.io/man
       - PROCESSING_THREADS=1 # optional - number of concurrent processing threads; default 1
     volumes:
+      - /home/notolac/traefik-stack/traefik/logs:/opt/log:ro #required - path to your Nginx Proxy Manager logs
       #- /home/notolac/nginx-proxy-manager/data/logs:/opt/log:ro #required - path to your Nginx Proxy Manager logs
-      - /home/notolac/traefik-stack/traefik/logs:/opt/custom #optional, required if using log_type = CUSTOM #change to the location of your choice
-      - /home/notolac/traefik-stack/traefik/logs/goaccess:/work #optional, required if using log_type = CUSTOM #change to the location of your choice
+      #- /home/notolac/traefik-stack/traefik/logs:/opt/custom #optional, required if using log_type = CUSTOM #change to the location of your choice
 
 #volumes:
 #  data:
