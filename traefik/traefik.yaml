@@ -33,9 +33,15 @@ services:
       - --entrypoints.websecure.forwardedheaders.trustedips=173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/13,104.24.0.0/14,172.64.0.0/13,131.0.72.0/22
       # Logs → archivo (GoAccess) y lectura por Promtail
       - --accesslog=true
-      - --accesslog.format=common         # CLF compatible con GoAccess
+      - --accesslog.format=common
       - --accesslog.filepath=/logs/access.log
       - --accesslog.bufferingsize=100
+      # >>> mantén cabeceras (User-Agent y Referer) en el access log
+      - --accesslog.fields.defaultmode=keep
+      - --accesslog.fields.headers.defaultmode=keep
+      - --accesslog.fields.headers.names.User-Agent=keep
+      - --accesslog.fields.headers.names.Referer=keep
+      # <<<
       - --log.level=INFO
       - --providers.file.directory=/etc/traefik/dynamic
       - --providers.file.watch=true
@@ -54,39 +60,29 @@ services:
       - "traefik.http.routers.traefik.middlewares=secureHeaders@file,authentikForwardAuth@file"
     
   goaccess:
-    image: allinurl/goaccess:latest
-    restart: unless-stopped
-    networks: [default]
+    image: "xavierh/goaccess-for-nginxproxymanager:latest"
+    container_name: goaccess
+    restart: always
     ports:
-      - "${GOA_PORT:-7880}:7880"          # WS interno (si ya tienes GOA_PORT, úsalo)
+      - "${GOACCESS_PORT:-7880}:7880"
+    environment:
+      - TZ=Europe/Madrid
+      - SKIP_ARCHIVED_LOGS=False #optional
+      - DEBUG=False #optional
+      - BASIC_AUTH=False #optional
+      - BASIC_AUTH_USERNAME= #optional
+      - BASIC_AUTH_PASSWORD= #optional
+      - EXCLUDE_IPS=127.0.0.1 #optional - comma delimited
+      - LOG_TYPE=TRAEFIK #optional - NPM or CUSTOM
+      - ENABLE_BROWSERS_LIST=True #optional - more information below
+      - CUSTOM_BROWSERS=Kuma:Uptime,TestBrowser:Crawler #optional - comma delimited, more information below
+      - HTML_REFRESH=5 #optional - Refresh the HTML report every X seconds. https://goaccess.io/man
+      - KEEP_LAST=90 #optional - Keep the last specified number of days in storage. https://goaccess.io/man
+      - PROCESSING_THREADS=2 # optional - number of concurrent processing threads; default 1
     volumes:
-      - ${TRAEFIK_LOG_DIR}:/logs:ro
-      - ${TRAEFIK_LOG_DIR}/goaccess:/work
-    command:
-      - /logs/access.log
-      - --log-format=%h\ %^\ %^\ \[%d:%t\ %^\]\ \"%r\"\ %s\ %b\ \"%R\"\ \"%u\"\ %^\ \"%^\"\ \"%^\"\ %T
-      - --date-format=%d/%b/%Y
-      - --time-format=%T
-      - --real-time-html
-      - --output=/work/index.html
-      - --ws-url=ws://${GOA_ADDR}:7880      # <-- IP del host y puerto WS
-      - --addr=0.0.0.0
-      - --port=7880
-      - --html-report-title=Traefik\ Access\ \(GoAccess\)
-      - --keep-last=90
-      - --persist
-  
-  goaccess-www:
-    image: nginx:alpine
-    restart: unless-stopped
-    networks: [default]
-    ports:
-      - "7881:80"                         # HTTP LAN para el HTML
-    volumes:
-      - ${TRAEFIK_LOG_DIR}/goaccess:/usr/share/nginx/html:ro
+      - ${TRAEFIK_LOG_DIR}:/opt/log:ro #required - path to your Nginx Proxy Manager logs
 
     
-
   loki:
     image: grafana/loki:3.5.3
     restart: unless-stopped
