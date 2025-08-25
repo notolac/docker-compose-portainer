@@ -2,9 +2,31 @@ services:
   uptime-kuma:
     image: louislam/uptime-kuma
     container_name: uptime-kuma
+    restart: unless-stopped
+    networks:
+      - traefik-stack
     volumes:
-      - /home/notolac/uptime-kuma:/app/data
-    ports:
-      - $HOST_PORT:3001 # <Host Port>:<Container Port>
-    restart: always
+      - ${UPTIME_KUMA_DIR}/uptime-kuma:/app/data
+    # Si quieres seguir accediendo por IP:PUERTO local, deja esto:
+    # ports:
+    #   - ${UPTIME_KUMA_HOST_PORT:-3001}:3001
 
+    labels:
+      - "traefik.enable=true"
+      # Router
+      - "traefik.http.routers.kuma.rule=Host(`${UPTIME_KUMA_DOMAIN}`)"   # ajusta el dominio
+      - "traefik.http.routers.kuma.entrypoints=websecure"
+      - "traefik.http.routers.kuma.tls=true"
+      - "traefik.http.routers.kuma.tls.certresolver=cloudflare"     # usa tu resolver real
+      - "traefik.http.routers.kuma.middlewares=secureHeaders@file"  # opcional si lo usas
+
+      # Servicio (Kuma escucha HTTP en 3001)
+      - "traefik.http.services.kuma.loadbalancer.server.port=3001"
+      - "traefik.http.services.kuma.loadbalancer.passhostheader=true"
+
+      # (Opcional) Proteger con SSO Authentik:
+      # - "traefik.http.routers.kuma.middlewares=secureHeaders@file,authentikForwardAuth@file"
+
+networks:
+  traefik-stack:
+    external: true
