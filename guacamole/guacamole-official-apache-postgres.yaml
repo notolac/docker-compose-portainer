@@ -3,10 +3,9 @@ services:
   guacd:
     image: guacamole/guacd
     container_name: guacd
-    networks:
-      - guacnet
-    ports:
-      - "4822:4822"   # interno; no pasa por Traefik
+    networks: [guacnet]
+    #ports:
+    #  - "4822:4822"   # interno; no pasa por Traefik
 
   mysql-guacamole:
     image: mysql:8.0
@@ -25,8 +24,10 @@ services:
     image: guacamole/guacamole
     container_name: guacamole-oficial
     depends_on:
-      - guacd
-      - mysql-guacamole
+      guacd:
+        condition: service_started
+      mysql-guacamole:
+        condition: service_started
     environment:
       MYSQL_HOSTNAME: "mysql-guacamole"
       MYSQL_PORT: "3306"
@@ -52,7 +53,7 @@ services:
       - "traefik.http.routers.guac.entrypoints=websecure"
       - "traefik.http.routers.guac.tls=true"
       - "traefik.http.routers.guac.tls.certresolver=cloudflare"
-      - "traefik.http.routers.guac.middlewares=secureHeaders,rateLimit,guac-buffer"
+      - "traefik.http.routers.guac.middlewares=secureHeaders@file,rateLimit@file,guac-buffer"
     
       # Router raíz -> /guacamole/
       - "traefik.http.routers.guac-root.rule=Host(`${GUAC_DOMAIN}`) && Path(`/`)"
