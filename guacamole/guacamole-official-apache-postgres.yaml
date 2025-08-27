@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   guacd:
     image: guacamole/guacd
@@ -5,16 +7,16 @@ services:
     networks:
       - guacnet
     ports:
-      - "4822:4822"
+      - "4822:4822"   # interno; no pasa por Traefik
 
   mysql-guacamole:
     image: mysql:8.0
     container_name: guacamoledb
     environment:
-      - MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
-      - MYSQL_DATABASE=$MYSQL_DATABASE
-      - MYSQL_USER=$MYSQL_USER
-      - MYSQL_PASSWORD=$MYSQL_PASSWORD
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     volumes:
       - /home/notolac/guacamole-mysql:/var/lib/mysql
     networks:
@@ -27,19 +29,67 @@ services:
       - guacd
       - mysql-guacamole
     environment:
-      MYSQL_HOSTNAME: "mysql-guacamole" # Hostname del contenedor mysql
-      MYSQL_PORT: "3306" # Puerto estándar de PostgreSQL
-      MYSQL_DATABASE: $MYSQL_DATABASE
-      MYSQL_USER: $MYSQL_USER
-      MYSQL_PASSWORD: $MYSQL_PASSWORD
-      GUACD_HOSTNAME: "guacd" # Hostname del contenedor guacd
-      GUACD_PORT: "4822" # Puerto estándar de guacd
+      MYSQL_HOSTNAME: "mysql-guacamole"
+      MYSQL_PORT: "3306"
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      GUACD_HOSTNAME: "guacd"
+      GUACD_PORT: "4822"
       TOTP_ENABLED: "true"
-    ports:
-      - "$HOSTPORT:8080"
+      # Opcional: si quieres forzar la URL base que mostrará Guacamole
+      # GUACAMOLE_HOME: /guac-home
+    # NO expongas 8080; Traefik lo cogerá por la red
+    # ports:
+    #   - "${HOSTPORT:-8080}:8080"
     networks:
       - guacnet
+      - traefik-stack
+
+    labels:
+      - "traefik.enable=true"
+
+      # --- Router principal: sirve /guacamole/* ---
+      - "traefik.http.routers.guac.rule=Host(`${GUAC_DOMAIN}`) && PathPrefix(`/guacamole`)"
+      - "traefik.http.routers.guac.entrypoints=websecure"
+      - "traefik.http.routers.guac.tls=true"
+      - "traefik.http.routers.guac.tls.certresolver=cloudflare"
+      - "traefik.http.routers.guac.middlewares=secureHeaders,rateLimit,guac-buffer,guac-timeouts"
+
+      # --- Router de redirección: /  ->  /guacamole/ ---
+      - "traefik.http.routers.guac-root.rule=Host(`${GUAC_DOMAIN}`) && Path(`/`)"
+      - "traefik.http.routers.guac-root.entrypoints=websecure"
+      - "traefik.http.routers.guac-root.tls=true"
+      - "traefik.http.routers.guac-root.tls.certresolver=cloudflare"
+      - "traefik.http.routers.guac-root.middlewares=guac-redirect"
+
+      # --- Service/backend ---
+      - "traefik.http.services.guac-svc.loadbalancer.server.port=8080"
+      - "traefik.http.routers.guac.service=guac-svc"
+
+      # --- Middleware: redirect raíz a /guacamole/ (igual que tu regla NPM) ---
+      - "traefik.http.middlewares.guac-redirect.redirectregex.regex=^/$"
+      - "traefik.http.middlewares.guac-redirect.redirectregex.replacement=/guacamole/"
+      - "traefik.http.middlewares.guac-redirect.redirectregex.permanent=true"
+
+      # --- Middleware: buffering (equivalente a client_max_body_size 64M y sin proxy buffering) ---
+      - "traefik.http.middlewares.guac-buffer.buffering.maxRequestBodyBytes=67108864"
+      - "traefik.http.middlewares.guac-buffer.buffering.maxResponseBodyBytes=0"
+      - "traefik.http.middlewares.guac-buffer.buffering.memRequestBodyBytes=0"
+      - "traefik.http.middlewares.guac-buffer.buffering.memResponseBodyBytes=0"
+      - "traefik.http.middlewares.guac-buffer.buffering.retryExpression=IsNetworkError() && Attempts() <= 2"
+
+      # --- Middleware: timeouts largos (equivalente a proxy_read/send_timeout 10h) ---
+      - "traefik.http.middlewares.guac-timeouts.serverstransport=guac-transport"
+
+      # --- ServersTransport (timeouts hacia el backend) ---
+      - "traefik.serversTransports.guac-transport.forwardingTimeouts.dialTimeout=10s"
+      - "traefik.serversTransports.guac-transport.forwardingTimeouts.responseHeaderTimeout=36000s"
+      - "traefik.serversTransports.guac-transport.forwardingTimeouts.idleConnTimeout=36000s"
 
 networks:
   guacnet:
     driver: bridge
+
+  traefik-stack:
+    external: true
