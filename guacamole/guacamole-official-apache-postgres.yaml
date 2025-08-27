@@ -41,14 +41,14 @@ services:
       - "traefik.enable=true"
 
       # Router principal: sirve /guacamole/*
-      - "traefik.http.routers.guac.rule=Host(`${GUAC_HOST}`) && PathPrefix(`/guacamole`)"
+      - "traefik.http.routers.guac.rule=Host(`ndp.notolac.org`) && PathPrefix(`/guacamole`)"
       - "traefik.http.routers.guac.entrypoints=websecure"
       - "traefik.http.routers.guac.tls=true"
       - "traefik.http.routers.guac.tls.certresolver=cloudflare"
       - "traefik.http.routers.guac.service=guac-svc"
 
       # Router raíz -> /guacamole/
-      - "traefik.http.routers.guac-root.rule=Host(`${GUAC_HOST}`) && Path(`/`)"
+      - "traefik.http.routers.guac-root.rule=Host(`ndp.notolac.org`) && Path(`/`)"
       - "traefik.http.routers.guac-root.entrypoints=websecure"
       - "traefik.http.routers.guac-root.tls=true"
       - "traefik.http.routers.guac-root.tls.certresolver=cloudflare"
