@@ -44,47 +44,46 @@ services:
     networks:
       - guacnet
       - traefik-stack
-
     labels:
       - "traefik.enable=true"
-
-      # --- Router principal: sirve /guacamole/* ---
+    
+      # Router principal: /guacamole/*
       - "traefik.http.routers.guac.rule=Host(`${GUAC_DOMAIN}`) && PathPrefix(`/guacamole`)"
       - "traefik.http.routers.guac.entrypoints=websecure"
       - "traefik.http.routers.guac.tls=true"
       - "traefik.http.routers.guac.tls.certresolver=cloudflare"
-      - "traefik.http.routers.guac.middlewares=secureHeaders,rateLimit,guac-buffer,guac-timeouts"
-
-      # --- Router de redirección: /  ->  /guacamole/ ---
+      - "traefik.http.routers.guac.middlewares=secureHeaders,rateLimit,guac-buffer"
+    
+      # Router raíz -> /guacamole/
       - "traefik.http.routers.guac-root.rule=Host(`${GUAC_DOMAIN}`) && Path(`/`)"
       - "traefik.http.routers.guac-root.entrypoints=websecure"
       - "traefik.http.routers.guac-root.tls=true"
       - "traefik.http.routers.guac-root.tls.certresolver=cloudflare"
       - "traefik.http.routers.guac-root.middlewares=guac-redirect"
-
-      # --- Service/backend ---
-      - "traefik.http.services.guac-svc.loadbalancer.server.port=8080"
+    
+      # Service/backend + serversTransport + passHostHeader
       - "traefik.http.routers.guac.service=guac-svc"
-
-      # --- Middleware: redirect raíz a /guacamole/ (igual que tu regla NPM) ---
+      - "traefik.http.services.guac-svc.loadbalancer.server.port=8080"
+      - "traefik.http.services.guac-svc.loadbalancer.passHostHeader=true"
+      - "traefik.http.services.guac-svc.loadbalancer.serversTransport=guac-transport"
+    
+      # Redirect /
       - "traefik.http.middlewares.guac-redirect.redirectregex.regex=^/$"
       - "traefik.http.middlewares.guac-redirect.redirectregex.replacement=/guacamole/"
       - "traefik.http.middlewares.guac-redirect.redirectregex.permanent=true"
-
-      # --- Middleware: buffering (equivalente a client_max_body_size 64M y sin proxy buffering) ---
+    
+      # Buffering (≈ client_max_body_size 64M, sin buffering de respuesta)
       - "traefik.http.middlewares.guac-buffer.buffering.maxRequestBodyBytes=67108864"
       - "traefik.http.middlewares.guac-buffer.buffering.maxResponseBodyBytes=0"
       - "traefik.http.middlewares.guac-buffer.buffering.memRequestBodyBytes=0"
       - "traefik.http.middlewares.guac-buffer.buffering.memResponseBodyBytes=0"
       - "traefik.http.middlewares.guac-buffer.buffering.retryExpression=IsNetworkError() && Attempts() <= 2"
+    
+      # ServersTransport (timeouts largos)
+      - "traefik.http.serversTransports.guac-transport.forwardingTimeouts.dialTimeout=10s"
+      - "traefik.http.serversTransports.guac-transport.forwardingTimeouts.responseHeaderTimeout=36000s"
+      - "traefik.http.serversTransports.guac-transport.forwardingTimeouts.idleConnTimeout=36000s"
 
-      # --- Middleware: timeouts largos (equivalente a proxy_read/send_timeout 10h) ---
-      - "traefik.http.middlewares.guac-timeouts.serverstransport=guac-transport"
-
-      # --- ServersTransport (timeouts hacia el backend) ---
-      - "traefik.serversTransports.guac-transport.forwardingTimeouts.dialTimeout=10s"
-      - "traefik.serversTransports.guac-transport.forwardingTimeouts.responseHeaderTimeout=36000s"
-      - "traefik.serversTransports.guac-transport.forwardingTimeouts.idleConnTimeout=36000s"
 
 networks:
   guacnet:
