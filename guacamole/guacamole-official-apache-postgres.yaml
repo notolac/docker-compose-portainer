@@ -1,11 +1,9 @@
 ---
 services:
   guacd:
-    image: guacamole/guacd
+    image: guacamole/guacd:1.6.0
     container_name: guacd
     networks: [guacnet]
-    #ports:
-    #  - "4822:4822"   # interno; no pasa por Traefik
 
   mysql-guacamole:
     image: mysql:8.0
@@ -17,11 +15,10 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     volumes:
       - /home/notolac/guacamole-mysql:/var/lib/mysql
-    networks:
-      - guacnet
+    networks: [guacnet]
 
   guacamole:
-    image: guacamole/guacamole
+    image: guacamole/guacamole:1.6.0
     container_name: guacamole-oficial
     depends_on:
       guacd:
@@ -37,58 +34,37 @@ services:
       GUACD_HOSTNAME: "guacd"
       GUACD_PORT: "4822"
       TOTP_ENABLED: "true"
-      # Opcional: si quieres forzar la URL base que mostrará Guacamole
-      # GUACAMOLE_HOME: /guac-home
-    # NO expongas 8080; Traefik lo cogerá por la red
-    # ports:
-    #   - "${HOSTPORT:-8080}:8080"
     networks:
       - guacnet
       - traefik-stack
     labels:
       - "traefik.enable=true"
-    
-      # Router principal: /guacamole/*
-      - "traefik.http.routers.guac.rule=Host(`${GUAC_HOST}`) && PathPrefix(`/guacamole`)"
+
+      # Router principal: sirve /guacamole/*
+      - "traefik.http.routers.guac.rule=Host(`ndp.notolac.org`) && PathPrefix(`/guacamole`)"
       - "traefik.http.routers.guac.entrypoints=websecure"
       - "traefik.http.routers.guac.tls=true"
       - "traefik.http.routers.guac.tls.certresolver=cloudflare"
-      - "traefik.http.routers.guac.middlewares=secureHeaders@file,rateLimit@file,guac-buffer"
-    
+      - "traefik.http.routers.guac.service=guac-svc"
+
       # Router raíz -> /guacamole/
-      - "traefik.http.routers.guac-root.rule=Host(`${GUAC_HOST}`) && Path(`/`)"
+      - "traefik.http.routers.guac-root.rule=Host(`ndp.notolac.org`) && Path(`/`)"
       - "traefik.http.routers.guac-root.entrypoints=websecure"
       - "traefik.http.routers.guac-root.tls=true"
       - "traefik.http.routers.guac-root.tls.certresolver=cloudflare"
       - "traefik.http.routers.guac-root.middlewares=guac-redirect"
-    
-      # Service/backend + serversTransport + passHostHeader
-      - "traefik.http.routers.guac.service=guac-svc"
-      - "traefik.http.services.guac-svc.loadbalancer.server.port=8080"
-      - "traefik.http.services.guac-svc.loadbalancer.passHostHeader=true"
-      - "traefik.http.services.guac-svc.loadbalancer.serversTransport=guac-transport"
-    
-      # Redirect /
+
+      # Middleware: redirección /
       - "traefik.http.middlewares.guac-redirect.redirectregex.regex=^/$"
       - "traefik.http.middlewares.guac-redirect.redirectregex.replacement=/guacamole/"
       - "traefik.http.middlewares.guac-redirect.redirectregex.permanent=true"
-    
-      # Buffering (≈ client_max_body_size 64M, sin buffering de respuesta)
-      - "traefik.http.middlewares.guac-buffer.buffering.maxRequestBodyBytes=67108864"
-      - "traefik.http.middlewares.guac-buffer.buffering.maxResponseBodyBytes=0"
-      - "traefik.http.middlewares.guac-buffer.buffering.memRequestBodyBytes=0"
-      - "traefik.http.middlewares.guac-buffer.buffering.memResponseBodyBytes=0"
-      - "traefik.http.middlewares.guac-buffer.buffering.retryExpression=IsNetworkError() && Attempts() <= 2"
-    
-      # ServersTransport (timeouts largos)
-      - "traefik.http.serversTransports.guac-transport.forwardingTimeouts.dialTimeout=10s"
-      - "traefik.http.serversTransports.guac-transport.forwardingTimeouts.responseHeaderTimeout=36000s"
-      - "traefik.http.serversTransports.guac-transport.forwardingTimeouts.idleConnTimeout=36000s"
 
+      # Service/backend
+      - "traefik.http.services.guac-svc.loadbalancer.server.port=8080"
+      - "traefik.http.services.guac-svc.loadbalancer.passHostHeader=true"
 
 networks:
   guacnet:
     driver: bridge
-
   traefik-stack:
     external: true
