@@ -39,30 +39,29 @@ services:
       - traefik-stack
     labels:
       - "traefik.enable=true"
-
-      # Router principal: sirve /guacamole/*
+      # Router principal: /guacamole/*
       - "traefik.http.routers.guac.rule=Host(`${GUAC_DOMAIN}`) && PathPrefix(`/guacamole`)"
       - "traefik.http.routers.guac.entrypoints=websecure"
       - "traefik.http.routers.guac.tls=true"
       - "traefik.http.routers.guac.tls.certresolver=cloudflare"
       - "traefik.http.routers.guac.service=guac-svc"
-
-      # Router raíz -> /guacamole/
+      - "traefik.http.routers.guac.priority=9000"
+      # Router raíz -> /  (redirige a /guacamole/ sin tocar backend)
       - "traefik.http.routers.guac-root.rule=Host(`${GUAC_DOMAIN}`) && Path(`/`)"
       - "traefik.http.routers.guac-root.entrypoints=websecure"
       - "traefik.http.routers.guac-root.tls=true"
       - "traefik.http.routers.guac-root.tls.certresolver=cloudflare"
       - "traefik.http.routers.guac-root.middlewares=guac-redirect"
-      - "traefik.http.routers.guac-root.service=noop@internal" 
-
+      - "traefik.http.routers.guac-root.service=noop@internal"
+      - "traefik.http.routers.guac-root.priority=10000"
       # Middleware: redirección /
       - "traefik.http.middlewares.guac-redirect.redirectregex.regex=^/$"
       - "traefik.http.middlewares.guac-redirect.redirectregex.replacement=/guacamole/"
       - "traefik.http.middlewares.guac-redirect.redirectregex.permanent=true"
-
       # Service/backend
       - "traefik.http.services.guac-svc.loadbalancer.server.port=8080"
       - "traefik.http.services.guac-svc.loadbalancer.passHostHeader=true"
+
 
 networks:
   guacnet:
