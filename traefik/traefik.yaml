@@ -14,6 +14,7 @@ services:
     ports:
       - "${WEB_PORT:-80}:80"
       - "${WEBSECURE_PORT:-443}:443"
+      - "${WEBSECURE_PORT:-443}:443/udp"
       - "${METRICS_PORT:-8082}:8082"
     environment:
       - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
