@@ -40,7 +40,7 @@ services:
   # Runner externo (no expuesto por Traefik)
   n8n-runner:
     container_name: n8n-runner
-    image: docker.n8n.io/n8nio/n8n:1.112.5
+    image: docker.n8n.io/n8nio/n8n:1.119.1
     restart: unless-stopped
     depends_on:
       - n8n
