@@ -1,6 +1,6 @@
 services:
   mealie:
-    image: ghcr.io/mealie-recipes/mealie:v2.8.0
+    image: ghcr.io/mealie-recipes/mealie:v3.5.0
     container_name: mealie
     restart: always
     ports:
@@ -10,20 +10,47 @@ services:
         limits:
           memory: 1000M
     volumes:
-      - /home/notolac/mealie:/app/data/
+      - ${MEALIE_DATA_DIR:-/home/notolac/mealie}:/app/data
     environment:
-      # Set Backend ENV Variables Here
-      ALLOW_SIGNUP: false
-      PUID: 1000
-      PGID: 1000
-      TZ: Europe/Madrid
-      MAX_WORKERS: 1
-      WEB_CONCURRENCY: 2
-      BASE_URL: $BASE_URL # https://mealie.example.com
-      SMTP_HOST: $SMTP_HOST
-      SMTP_PORT: $SMTP_PORT
-      SMTP_FROM_NAME: $SMTP_FROM_NAME
-      SMTP_AUTH_STRATEGY: $SMTP_AUTH_STRATEGY
-      SMTP_FROM_EMAIL: $SMTP_FROM_EMAIL
-      SMTP_USER: $SMTP_USER
-      SMTP_PASSWORD: $SMTP_PASSWORD
+      # Permisos y zona horaria
+      PUID: "${MEALIE_PUID:-1000}"
+      PGID: "${MEALIE_PGID:-1000}"
+      TZ: "Europe/Madrid"
+
+      # General
+      BASE_URL: "${BASE_URL}"
+      ALLOW_SIGNUP: "${ALLOW_SIGNUP:-false}"
+      API_DOCS: "${API_DOCS:-True}"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+      DAILY_SCHEDULE_TIME: "${DAILY_SCHEDULE_TIME:-23:45}"
+
+      # Webworker (sustituye MAX_WORKERS / WEB_CONCURRENCY)
+      UVICORN_WORKERS: "${UVICORN_WORKERS:-2}"
+
+      # Base de datos (SQLite)
+      DB_ENGINE: "sqlite"
+      SQLITE_MIGRATE_JOURNAL_WAL: "${SQLITE_MIGRATE_JOURNAL_WAL:-false}"
+
+      # SMTP (según doc oficial)
+      SMTP_HOST: "${SMTP_HOST}"
+      SMTP_PORT: "${SMTP_PORT:-587}"
+      SMTP_FROM_NAME: "${SMTP_FROM_NAME:-Mealie}"
+      SMTP_AUTH_STRATEGY: "${SMTP_AUTH_STRATEGY:-TLS}"   # TLS / SSL / NONE
+      SMTP_FROM_EMAIL: "${SMTP_FROM_EMAIL}"
+      SMTP_USER: "${SMTP_USER}"
+      SMTP_PASSWORD: "${SMTP_PASSWORD}"
+
+      # OpenAI
+      OPENAI_BASE_URL: "${OPENAI_BASE_URL:-https://api.openai.com/v1}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
+      OPENAI_MODEL: "${OPENAI_MODEL:-gpt-5-nano}"
+      OPENAI_ENABLE_IMAGE_SERVICES: "${OPENAI_ENABLE_IMAGE_SERVICES:-true}"
+      OPENAI_WORKERS: "${OPENAI_WORKERS:-2}"
+      OPENAI_SEND_DATABASE_DATA: "${OPENAI_SEND_DATABASE_DATA:-true}"
+      OPENAI_REQUEST_TIMEOUT: "${OPENAI_REQUEST_TIMEOUT:-300}"
+      OPENAI_CUSTOM_HEADERS: "${OPENAI_CUSTOM_HEADERS:-}"
+      OPENAI_CUSTOM_PARAMS: "${OPENAI_CUSTOM_PARAMS:-}"
+
+      # Security
+      SECURITY_MAX_LOGIN_ATTEMPTS: "${SECURITY_MAX_LOGIN_ATTEMPTS:-5}"
+      SECURITY_USER_LOCKOUT_TIME: "${SECURITY_USER_LOCKOUT_TIME:-1}"
