@@ -1,8 +1,40 @@
-# The Firefly III Data Importer will ask you for the Firefly III URL and a "Client ID".
-# You can generate the Client ID at http://localhost/profile (after registering)
-# The Firefly III URL is: http://app:8080
+# Firefly III - Personal Finance Manager
+# https://www.firefly-iii.org/
 #
-# Other URL's will give 500 | Server Error
+# This compose file sets up Firefly III with PostgreSQL database,
+# data importer, and automated cron jobs.
+#
+# Before deploying, create the following environment variables in Portainer:
+# - SITE_OWNER: Your email address for system notifications
+# - APP_KEY: 32-character encryption key (generate with: openssl rand -hex 16)
+# - DB_DATABASE: Database name
+# - DB_USERNAME: Database username
+# - DB_PASSWORD: Database password
+# - POSTGRES_DB: Same as DB_DATABASE
+# - POSTGRES_USER: Same as DB_USERNAME
+# - POSTGRES_PASSWORD: Same as DB_PASSWORD
+# - MAIL_FROM: Email address for outgoing mail
+# - MAIL_USERNAME: SMTP username
+# - MAIL_PASSWORD: SMTP password
+# - MAIL_HOST: SMTP host (e.g., smtp.gmail.com, smtp.outlook.com)
+# - STATIC_CRON_TOKEN: 32-character token for cron jobs
+# - APP_URL: Public URL of your Firefly III instance
+# - HOST_PORT1: External port for Firefly III web interface (default: 8080)
+# - HOST_PORT2: External port for data importer (default: 8081)
+# - IMPORTER_MAIL_DESTINATION: Email destination for importer reports
+# - IMPORTER_MAIL_FROM_ADDRESS: Email sender address for importer
+# - IMPORTER_MAIL_HOST: SMTP host for importer
+# - IMPORTER_MAIL_PORT: SMTP port for importer
+# - IMPORTER_MAIL_USERNAME: SMTP username for importer
+# - IMPORTER_MAIL_PASSWORD: SMTP password for importer
+# - IMPORTER_MAIL_ENCRYPTION: SMTP encryption for importer
+# - FIREFLY_UPLOAD_PATH: Local path for Firefly III uploads (default: /home/notolac/fireflyiii/upload)
+# - FIREFLY_DB_PATH: Local path for PostgreSQL data (default: /home/notolac/fireflyiii/db)
+#
+# IMPORTANT: Ensure the directories exist and have correct permissions:
+# mkdir -p /home/notolac/fireflyiii/upload /home/notolac/fireflyiii/db
+# chown -R 1000:1000 /home/notolac/fireflyiii/upload  # UID 1000 for Firefly III
+# chown -R 999:999 /home/notolac/fireflyiii/db        # UID 999 for PostgreSQL
 services:
   app:
     image: fireflyiii/core:latest
@@ -12,13 +44,64 @@ services:
       - firefly_iii
     restart: always
     volumes:
-      - firefly_iii_upload:/var/www/html/storage/upload
+      - ${FIREFLY_UPLOAD_PATH:-/home/notolac/fireflyiii/upload}:/var/www/html/storage/upload
     environment:
-      # You can leave this on "local". If you change it to production most console commands will ask for extra confirmation.
-      # Never set it to "testing".
+      # Application Environment
       - APP_ENV=local
-      # Set to true if you want to see debug information in error screens.
       - APP_DEBUG=false
+      - SITE_OWNER=$SITE_OWNER
+      - APP_KEY=$APP_KEY
+      # Language and Localization
+      - DEFAULT_LANGUAGE=en_US
+      - DEFAULT_LOCALE=equal
+      - TZ=Europe/Madrid
+      # Security and Proxies
+      - TRUSTED_PROXIES=172.16.0.0/12,10.0.0.0/8,173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/13,104.24.0.0/14,172.64.0.0/13,131.0.72.0/22
+      # Logging Configuration
+      - LOG_CHANNEL=stack
+      - APP_LOG_LEVEL=info
+      - AUDIT_LOG_LEVEL=info
+      # Database Configuration
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=$DB_DATABASE
+      - DB_USERNAME=$DB_USERNAME
+      - DB_PASSWORD=$DB_PASSWORD
+      # Cache and Session
+      - CACHE_DRIVER=file
+      - SESSION_DRIVER=file
+      # Email Configuration
+      - MAIL_MAILER=smtp
+      - MAIL_HOST=$MAIL_HOST
+      - MAIL_PORT=587
+      - MAIL_FROM=$MAIL_FROM
+      - MAIL_USERNAME=$MAIL_USERNAME
+      - MAIL_PASSWORD=$MAIL_PASSWORD
+      - MAIL_ENCRYPTION=tls
+      # Additional Features
+      - SEND_ERROR_MESSAGE=true
+      - SEND_REPORT_JOURNALS=true
+      - ENABLE_EXTERNAL_MAP=false
+      - ENABLE_EXTERNAL_RATES=false
+      # Authentication
+      - AUTHENTICATION_GUARD=web
+      # Cron Token
+      - STATIC_CRON_TOKEN=$STATIC_CRON_TOKEN
+      # Docker Optimization
+      - DKR_BUILD_LOCALE=false
+      - DKR_CHECK_SQLITE=true
+      - DKR_RUN_MIGRATION=true
+      - DKR_RUN_UPGRADE=true
+      - DKR_RUN_VERIFY=true
+      - DKR_RUN_REPORT=true
+      - DKR_RUN_PASSPORT_INSTALL=true
+      # Application Settings
+      - APP_NAME=FireflyIII
+      - BROADCAST_DRIVER=log
+      - QUEUE_DRIVER=sync
+      - CACHE_PREFIX=firefly
+      - APP_URL=$APP_URL
       # This should be your email address.
       # If you use Docker or similar, you can set this variable from a file by using SITE_OWNER_FILE
       # The variable is used in some errors shown to users who aren't admin.
@@ -42,9 +125,6 @@ services:
       # Example: Europe/Amsterdam
       # For a list of supported time zones, see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
       - TZ=Europe/Madrid
-      # TRUSTED_PROXIES is a useful variable when using Docker and/or a reverse proxy.
-      # Set it to ** and reverse proxies work just fine.
-      - TRUSTED_PROXIES=**
       # The log channel defines where your log entries go to.
       # Several other options exist. You can use 'single' for one big fat error log (not recommended).
       # Also available are 'syslog', 'errorlog' and 'stdout' which will log to the system itself.
@@ -320,7 +400,7 @@ services:
       - POSTGRES_USER=$POSTGRES_USER
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
-      - firefly_iii_db:/var/lib/postgresql/data
+      - ${FIREFLY_DB_PATH:-/home/notolac/fireflyiii/db}:/var/lib/postgresql/data
 
   importer:
     image: fireflyiii/data-importer:latest
@@ -477,7 +557,7 @@ services:
       - LOG_LEVEL=debug
       # TRUSTED_PROXIES is a useful variable when using Docker and/or a reverse proxy.
       # Set it to ** and reverse proxies work just fine.
-      - TRUSTED_PROXIES=
+      - TRUSTED_PROXIES=172.16.0.0/12,10.0.0.0/8,173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/13,104.24.0.0/14,172.64.0.0/13,131.0.72.0/22
       #
       # Time zone
       #
@@ -504,15 +584,15 @@ services:
       # array = debug mailer that does nothing.
       - MAIL_MAILER=
       # where to send the report?
-      - MAIL_DESTINATION=noreply@example.com
+      - MAIL_DESTINATION=$IMPORTER_MAIL_DESTINATION
       # other mail settings
       # These variables can be set from a file if you append it with _FILE
-      - MAIL_FROM_ADDRESS=noreply@example.com
-      - MAIL_HOST=smtp.mailtrap.io
-      - MAIL_PORT=2525
-      - MAIL_USERNAME=username
-      - MAIL_PASSWORD=password
-      - MAIL_ENCRYPTION=null
+      - MAIL_FROM_ADDRESS=$IMPORTER_MAIL_FROM_ADDRESS
+      - MAIL_HOST=$IMPORTER_MAIL_HOST
+      - MAIL_PORT=$IMPORTER_MAIL_PORT
+      - MAIL_USERNAME=$IMPORTER_MAIL_USERNAME
+      - MAIL_PASSWORD=$IMPORTER_MAIL_PASSWORD
+      - MAIL_ENCRYPTION=$IMPORTER_MAIL_ENCRYPTION
       # Extra settings depending on your mail configuration above.
       # These variables can be set from a file if you append it with _FILE
       - MAILGUN_DOMAIN=
@@ -558,9 +638,6 @@ services:
     command: sh -c "echo \"0 3 * * * wget -qO- http://app:8080/api/v1/cron/$STATIC_CRON_TOKEN\" | crontab - && crond -f -L /dev/stdout"
     networks:
       - firefly_iii
-volumes:
-  firefly_iii_upload:
-  firefly_iii_db:
 
 networks:
   firefly_iii:

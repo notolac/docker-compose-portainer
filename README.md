@@ -16,57 +16,137 @@ Before getting started, make sure you have the following prerequisites:
 
 ## Getting Started
 
-To get started with Docker using Portainer and Docker Compose, follow these steps:
+To get started with Docker using Portainer and Docker Compose, you need to install Docker first and then deploy Portainer. Choose your operating system below for detailed instructions.
 
-1. install the necessary dependencies to install the latest version of docker:
+### Installing Docker
+
+#### For Ubuntu
+
+1. **Install required dependencies:**
+   These packages are necessary for adding the Docker repository and installing Docker properly.
 
    ```bash
+   sudo apt update
    sudo apt install lsb-release gnupg2 apt-transport-https ca-certificates curl software-properties-common -y
    ```
 
-2. Download GPG certificate and repositories to run via APT, use `debian` or `ubuntu` for the appropriate OS:
+2. **Add Docker's official GPG key:**
+   This key verifies the authenticity of the Docker packages.
 
    ```bash
-   sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/ubuntu.gpg
+   sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/docker.gpg
    ```
 
-3. Add the downloaded repository to the system,use `debian` or `ubuntu` for the appropriate OS:
+3. **Add the Docker repository:**
+   This adds the official Docker repository to your system's package sources.
 
    ```bash
    sudo add-apt-repository "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
    ```
 
-4. Update the repositories:
+4. **Update package index:**
+   Refresh the package list to include the new Docker repository.
 
    ```bash
    sudo apt update
    ```
 
-5. Install docker:
+5. **Install Docker:**
+   Install Docker Engine, CLI, containerd, and the Docker Compose plugin.
 
    ```bash
-   sudo apt install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+   sudo apt install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
    ```
 
-6. Install portainer node (Web interface from where you manage your nodes or agents) :
+#### For Debian
+
+1. **Install required dependencies:**
+   These packages are necessary for adding the Docker repository and installing Docker properly.
 
    ```bash
-   sudo docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_stuff:/data portainer/portainer-ce:2.21.0
+   sudo apt update
+   sudo apt install lsb-release gnupg2 apt-transport-https ca-certificates curl software-properties-common -y
    ```
 
-7. Install portainer agent (each agent that you will manage from the node, does not run web interface):
+2. **Add Docker's official GPG key:**
+   This key verifies the authenticity of the Docker packages.
 
    ```bash
-   sudo docker run -d   -p 9001:9001   --name portainer_agent   --restart=always   -v /var/run/docker.sock:/var/run/docker.sock   -v /var/lib/docker/volumes:/var/lib/docker/volumes   portainer/agent:2.21.0
+   sudo curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/docker.gpg
    ```
 
-8. Access the Portainer web interface by opening the following URL in your web browser: [https://localhost:9443](https://localhost:9443)
+3. **Add the Docker repository:**
+   This adds the official Docker repository to your system's package sources.
 
-   - If you are running Docker on a remote machine, replace `localhost` with the IP address or hostname of the machine.
+   ```bash
+   sudo add-apt-repository "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
+   ```
 
-9. Follow the on-screen instructions to set up an admin user and connect Portainer to your Docker environment.
+4. **Update package index:**
+   Refresh the package list to include the new Docker repository.
 
-10. Once logged in, you can start managing your Docker environment using the Portainer web interface.
+   ```bash
+   sudo apt update
+   ```
+
+5. **Install Docker:**
+   Install Docker Engine, CLI, containerd, and the Docker Compose plugin.
+
+   ```bash
+   sudo apt install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
+   ```
+
+### Installing Portainer
+
+Portainer consists of two main components: the Portainer Server (web interface) and the Portainer Agent (for managing remote Docker instances).
+
+6. **Install Portainer Server (Web Interface):**
+   The Portainer Server provides the web-based management interface. We're using the LTS version for stability.
+
+   ```bash
+   sudo docker run -d \
+     -p 8000:8000 \
+     -p 9443:9443 \
+     --name portainer \
+     --restart=always \
+     -v /var/run/docker.sock:/var/run/docker.sock \
+     -v portainer_data:/data \
+     portainer/portainer-ce:lts
+   ```
+
+7. **(Optional) Install Portainer Agent:**
+   The Portainer Agent allows you to manage this Docker instance from a remote Portainer Server. Only install this if you plan to manage multiple Docker hosts from a central Portainer instance.
+
+   ```bash
+   sudo docker run -d \
+     -p 9001:9001 \
+     --name portainer_agent \
+     --restart=always \
+     -v /var/run/docker.sock:/var/run/docker.sock \
+     -v /var/lib/docker/volumes:/var/lib/docker/volumes \
+     portainer/agent:lts
+   ```
+
+### Accessing Portainer
+
+8. **Access the Portainer web interface:**
+   Open your web browser and navigate to: [https://localhost:9443](https://localhost:9443)
+
+   - If you're accessing from a remote machine, replace `localhost` with the server's IP address or hostname.
+   - Accept the security warning for the self-signed certificate (this is normal for initial setup).
+
+9. **Initial Setup:**
+   - Create an admin user account
+   - Connect Portainer to your local Docker environment
+   - You can now manage containers, images, networks, and volumes through the web interface
+
+10. **Start using Portainer:**
+    Once logged in, you can:
+    - Deploy containerized applications
+    - Monitor running containers
+    - Manage Docker images and volumes
+    - Create and manage networks
+    - Use Docker Compose to deploy multi-container applications
 
 ## Conclusion
 

@@ -1,0 +1,278 @@
+# proxygpt - Open WebUI + LiteLLM Stack (Docker Compose Standalone)
+# https://github.com/open-webui/open-webui + https://github.com/BerriAI/litellm
+#
+# This compose file sets up a complete proxygpt stack with:
+# - Open WebUI: Web interface for interacting with LLMs (Port 8088)
+# - LiteLLM: LLM proxy server with model management (Port 4000)
+# - PostgreSQL: Database for LiteLLM (Internal port 5432)
+#
+# Open WebUI is integrated with LiteLLM for unified LLM access and can also
+# connect directly to Ollama servers via OLLAMA_BASE_URL.
+#
+# ===========================================
+# DEPLOYMENT STEPS:
+# ===========================================
+# 1. Create required directories with correct permissions (see below)
+# 2. Generate secure keys (see STEP 1 below)
+# 3. Configure environment variables in Portainer or .env file
+# 4. Deploy the stack
+#
+# ===========================================
+# CONFIGURATION OPTIONS:
+# ===========================================
+#
+# Option 1 - Environment Variables in Portainer (Recommended):
+# Configure each component separately in Portainer stack variables
+#
+# Option 2 - .env File:
+# Create a .env file in the same directory with all required variables
+#
+# ===========================================
+# REQUIRED ENVIRONMENT VARIABLES:
+# ===========================================
+# ⚠️  IMPORTANT: In Portainer, DO NOT use quotes around variable values!
+# ⚠️  Example: DATABASE_URL=postgresql://... (WITHOUT quotes)
+#
+# - OLLAMA_BASE_URL: URL of your Ollama server (e.g., http://192.168.1.110:11434)
+# - DATABASE_URL: Complete PostgreSQL connection string
+#   Format: postgresql://USER:PASSWORD@db:5432/DATABASE_NAME
+#   Example: postgresql://llmproxy:your_secure_password@db:5432/litellm
+# - LITELLM_MASTER_KEY: Master key for LiteLLM authentication (GENERATE FIRST!)
+# - LITELLM_SALT_KEY: Salt key for LiteLLM encryption (GENERATE FIRST!)
+# - POSTGRES_DB: PostgreSQL database name (e.g., litellm)
+# - POSTGRES_USER: PostgreSQL username (e.g., llmproxy)
+# - POSTGRES_PASSWORD: PostgreSQL password (REQUIRED)
+#
+# Optional variables (with defaults):
+# - OPENWEBUI_HOST_PORT: External port for Open WebUI (default: 8088)
+# - LITELLM_HOST_PORT: External port for LiteLLM (default: 4000)
+# - LITELLM_DATA_PATH: Path for PostgreSQL data (default: /home/notolac/proxygpt/litellm-db)
+# - OPENWEBUI_DATA_PATH: Path for Open WebUI data (default: /home/notolac/proxygpt/open-webui-data)
+#
+# ===========================================
+# STEP 1: Generate Secure Keys and Configure Variables (REQUIRED)
+# ===========================================
+# Execute these commands in your terminal BEFORE deploying:
+#
+# 1. Generate LITELLM_MASTER_KEY:
+#   echo "sk-$(openssl rand -hex 24)"
+#
+# 2. Generate LITELLM_SALT_KEY:
+#   echo "sk-$(openssl rand -hex 24)"
+#
+# Example output:
+#   sk-a1b2c3d4e5f6789abc012def34567890abcdef1234567890ab
+#   sk-z9y8x7w6v5u43210fedcba9876543210fedcba0987654321
+#
+# 3. Configure DATABASE_URL:
+#   IMPORTANT: The DATABASE_URL must match your PostgreSQL credentials.
+#   Format: postgresql://POSTGRES_USER:POSTGRES_PASSWORD@db:5432/POSTGRES_DB
+#
+#   Example configuration in Portainer:
+#   POSTGRES_USER=llmproxy
+#   POSTGRES_PASSWORD=your_secure_password_here
+#   POSTGRES_DB=litellm
+#   DATABASE_URL=postgresql://llmproxy:your_secure_password_here@db:5432/litellm
+#
+#   Note: The username, password, and database name in DATABASE_URL MUST match
+#   the values in POSTGRES_USER, POSTGRES_PASSWORD, and POSTGRES_DB respectively.
+#
+# Save these values - you'll need them for Portainer or .env file!
+#
+# ===========================================
+# STEP 2: Create Directories (REQUIRED)
+# ===========================================
+# mkdir -p /home/notolac/proxygpt/litellm-db /home/notolac/proxygpt/open-webui-data
+# sudo chown -R $(id -u):$(id -g) /home/notolac/proxygpt
+#
+# ===========================================
+# DEPLOYMENT INSTRUCTIONS:
+# ===========================================
+# Deploy with: docker-compose -f proxy-gpt-standalone.yaml up -d
+#
+# Or using Portainer:
+# 1. Go to Stacks > Add stack
+# 2. Upload this file or paste its contents
+# 3. Add environment variables in the "Environment variables" section
+#    IMPORTANT: Do NOT use quotes around values!
+#    Example format in Portainer:
+#    
+#    Name                 | Value
+#    ---------------------|-----------------------------------------------
+#    OLLAMA_BASE_URL      | http://192.168.1.110:11434
+#    DATABASE_URL         | postgresql://llmproxy:password@db:5432/litellm
+#    POSTGRES_DB          | litellm
+#    POSTGRES_USER        | llmproxy
+#    POSTGRES_PASSWORD    | password
+#    LITELLM_MASTER_KEY   | sk-your-generated-key
+#    LITELLM_SALT_KEY     | sk-your-generated-salt-key
+#
+# 4. Click "Deploy the stack"
+#
+# ===========================================
+# TROUBLESHOOTING:
+# ===========================================
+# - Check container status: docker-compose -f proxy-gpt-standalone.yaml ps
+# - View service logs: docker-compose -f proxy-gpt-standalone.yaml logs -f <service_name>
+#   Example: docker-compose -f proxy-gpt-standalone.yaml logs -f litellm
+# - Check all logs: docker-compose -f proxy-gpt-standalone.yaml logs -f
+#
+# Common Issues:
+# --------------
+# 1. Database connection issues:
+#   * Error: "URL must start with postgresql://"
+#     → Remove quotes from DATABASE_URL in Portainer
+#   * Verify DATABASE_URL is set correctly
+#   * Format: postgresql://USER:PASSWORD@db:5432/DATABASE_NAME
+#   * Ensure POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD match DATABASE_URL
+#   * Ensure db service is healthy before litellm starts
+#   * Check db healthcheck: docker logs proxygpt-db
+#
+# 2. Healthcheck issues (Container keeps restarting):
+#   * Error in logs: "HEAD /health/liveliness HTTP/1.1" 405 Method Not Allowed
+#     → Healthcheck uses GET method, not HEAD (fixed in current version)
+#   * Check healthcheck status: docker inspect proxygpt-litellm | grep -A 10 Health
+#   * Verify endpoint is responding: curl http://localhost:4000/health/liveliness
+#
+# 3. Volume permission issues:
+#   * Ensure directories exist: /home/notolac/proxygpt/litellm-db and /home/notolac/proxygpt/open-webui-data
+#   * Check permissions: ls -la /home/notolac/proxygpt
+#   * Fix permissions: sudo chown -R $(id -u):$(id -g) /home/notolac/proxygpt
+#
+# 4. Port conflicts:
+#   * Check if ports are already in use: netstat -tuln | grep -E '4000|8088|5432'
+#   * Change ports using environment variables (see optional variables above)
+#
+# 5. Verify environment variables: docker inspect proxygpt-litellm | grep -A 20 Env
+# ===========================================
+
+version: '3.8'
+
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: proxygpt-open-webui
+    restart: always
+    networks:
+      - proxygpt
+    depends_on:
+      - litellm
+    volumes:
+      - ${OPENWEBUI_DATA_PATH:-/home/notolac/proxygpt/open-webui-data}:/app/backend/data
+    environment:
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL}
+    ports:
+      - "${OPENWEBUI_HOST_PORT:-8088}:8080"
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-stable
+    container_name: proxygpt-litellm
+    restart: always
+    networks:
+      - proxygpt
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - STORE_MODEL_IN_DB=True
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
+      - LITELLM_SALT_KEY=${LITELLM_SALT_KEY}
+    ports:
+      - "${LITELLM_HOST_PORT:-4000}:4000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 -O /dev/null http://localhost:4000/health/liveliness || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  db:
+    image: postgres:16
+    container_name: proxygpt-db
+    restart: always
+    networks:
+      - proxygpt
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ${LITELLM_DATA_PATH:-/home/notolac/proxygpt/litellm-db}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  proxygpt:
+    driver: bridge
+
+# ===========================================
+# EXAMPLE PORTAINER ENVIRONMENT VARIABLES CONFIGURATION
+# ===========================================
+# Copy and paste these into Portainer's "Environment variables" section
+# when deploying the stack. Replace the example values with your actual values.
+#
+# ⚠️  CRITICAL: DO NOT USE QUOTES around the values in Portainer!
+# ⚠️  Quotes will be included literally and cause connection errors.
+#
+# REQUIRED VARIABLES:
+# -------------------
+# OLLAMA_BASE_URL=http://192.168.1.110:11434
+# DATABASE_URL=postgresql://llmproxy:your_secure_password_here@db:5432/litellm
+# LITELLM_MASTER_KEY=sk-a1b2c3d4e5f6789abc012def34567890abcdef1234567890ab
+# LITELLM_SALT_KEY=sk-z9y8x7w6v5u43210fedcba9876543210fedcba0987654321
+# POSTGRES_DB=litellm
+# POSTGRES_USER=llmproxy
+# POSTGRES_PASSWORD=your_secure_password_here
+#
+# OPTIONAL VARIABLES (uncomment if needed):
+# -----------------------------------------
+# OPENWEBUI_HOST_PORT=8088
+# LITELLM_HOST_PORT=4000
+# LITELLM_DATA_PATH=/home/notolac/proxygpt/litellm-db
+# OPENWEBUI_DATA_PATH=/home/notolac/proxygpt/open-webui-data
+#
+# IMPORTANT NOTES:
+# ----------------
+# 1. DO NOT use quotes (", ') around values - they will be included literally!
+#    ❌ WRONG: DATABASE_URL="postgresql://..."
+#    ✅ RIGHT: DATABASE_URL=postgresql://...
+#
+# 2. Ensure POSTGRES_USER, POSTGRES_PASSWORD, and POSTGRES_DB in DATABASE_URL
+#    match the individual POSTGRES_* variables exactly
+#
+# 3. Generate secure keys before deploying (see STEP 1 above)
+#
+# 4. Keep your keys and passwords secure - never commit them to version control
+#
+# 5. Common errors:
+#    - "URL must start with postgresql://" → Remove quotes from DATABASE_URL
+#    - "Connection refused" → Check POSTGRES_PASSWORD matches in both variables
+#    - "Database does not exist" → Verify POSTGRES_DB matches DATABASE_URL
+#    - "Permission denied" → Check directory permissions (see STEP 2 above)
+# ===========================================
+
+# ===========================================
+# EXAMPLE .env FILE
+# ===========================================
+# If deploying via docker-compose command line, create a .env file with:
+#
+# OLLAMA_BASE_URL=http://192.168.1.110:11434
+# DATABASE_URL=postgresql://llmproxy:your_secure_password@db:5432/litellm
+# LITELLM_MASTER_KEY=sk-your-generated-master-key
+# LITELLM_SALT_KEY=sk-your-generated-salt-key
+# POSTGRES_DB=litellm
+# POSTGRES_USER=llmproxy
+# POSTGRES_PASSWORD=your_secure_password
+# OPENWEBUI_HOST_PORT=8088
+# LITELLM_HOST_PORT=4000
+# LITELLM_DATA_PATH=/home/notolac/proxygpt/litellm-db
+# OPENWEBUI_DATA_PATH=/home/notolac/proxygpt/open-webui-data
+#
+# Place this .env file in the same directory as proxy-gpt-standalone.yaml
+# Then deploy with: docker-compose -f proxy-gpt-standalone.yaml up -d
+# ===========================================
