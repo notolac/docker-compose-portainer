@@ -1,0 +1,16 @@
+---
+#---------------------------------------------------------------------#
+#     Wallos - Subscription tracker and manager                     #
+#---------------------------------------------------------------------#
+services:
+  wallos:
+    container_name: wallos
+    image: bellamy/wallos:latest
+    restart: unless-stopped
+    ports:
+      - "${WALLOS_PORT:-8282}:80/tcp"
+    volumes:
+      - ${PWD}/wallos-app/db:/var/www/html/db
+      - ${PWD}/wallos-app/logos:/var/www/html/images/uploads/logos
+    environment:
+      TZ: 'Europe/Madrid'
