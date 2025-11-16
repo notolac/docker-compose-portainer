@@ -1,0 +1,115 @@
+# ============================
+# Portainer Variables (recommended)
+# ============================
+# Basic:
+# - LINKDING_CONTAINER_NAME     Container name
+#   Ex: "linkding_app"
+#
+# - LINKDING_IP                 Host IP where linkding runs
+#   Ex: "192.168.1.110"
+#
+# - LINKDING_PORT               Host port that will expose linkding
+#   Ex: "9090"
+#
+# - LINKDING_DATA_PATH          Host path for persistent data
+#   Ex: "/home/notolac/linkding"
+#
+# - LINKDING_CONTEXT_PATH       Subpath if you serve linkding under a path
+#   Ex: ""  (recommended, root)
+#   Ex: "/links" if served as https://domain/links
+#
+# Initial admin user (FIRST BOOT ONLY):
+# - LINKDING_SUPERUSER_NAME
+#   Ex: "admin"
+#
+# - LINKDING_SUPERUSER_PASSWORD
+#   ⚠ USE ONLY to create the initial user.
+#   Then change the password within linkding
+#   and clear these variables in Portainer.
+#
+# Security / behavior:
+# - LINKDING_DISABLE_BACKGROUND_TASKS
+#   "False" recommended.
+#   "True" disables background tasks (large imports, metadata, etc.).
+#
+# - LINKDING_DISABLE_URL_VALIDATION
+#   "False" HIGHLY recommended.
+#   "True" allows malformed and potentially dangerous URLs.
+#
+# - LINKDING_ENABLE_AUTH_PROXY
+#   "False" recommended if NOT using Authelia/Keycloak/OIDC by header.
+#   "True" disables normal login and trusts proxy header.
+#
+# - LINKDING_CSRF_TRUSTED_ORIGINS
+#   List of trusted origins for CSRF requests.
+#   Ex: "https://linkding.contoso.com"
+#
+# - LINKDING_LOG_X_FORWARDED_FOR
+#   "True" recommended behind Traefik/Cloudflare.
+#   Allows logging the client's real IP.
+#
+# - LINKDING_REQUEST_MAX_CONTENT_LENGTH
+#   Maximum request (POST) size in bytes.
+#   Recommended ex: "10485760" (10 MiB)
+#   Protects against giant or abusive uploads.
+#
+# (Optional, if someday you add SSO/OIDC)
+# - LINKDING_ENABLE_OIDC
+#   "False" by default if not using OIDC.
+
+services:
+  linkding:
+    container_name: "${LINKDING_CONTAINER_NAME}"
+    # Better to pin a specific version and update it when you want
+    image: sissbruecker/linkding:latest
+    ports:
+      - "${LINKDING_IP}:${LINKDING_PORT}:9090"
+    volumes:
+      - "${LINKDING_DATA_PATH}:/etc/linkding/data"
+    environment:
+      # Internal name used by the app, useful for logs
+      LD_CONTAINER_NAME: "${LINKDING_CONTAINER_NAME}"
+
+      # Context path (empty if served at domain root)
+      LD_CONTEXT_PATH: "${LINKDING_CONTEXT_PATH}"
+
+      # Initial admin user: use only on first boot.
+      # After creating the user and changing the password,
+      # it is recommended to clear these variables in Portainer.
+      LD_SUPERUSER_NAME: "${LINKDING_SUPERUSER_NAME}"
+      LD_SUPERUSER_PASSWORD: "${LINKDING_SUPERUSER_PASSWORD}"
+
+      # Security / functional integrity
+      # False => background tasks ACTIVE (recommended)
+      LD_DISABLE_BACKGROUND_TASKS: "${LINKDING_DISABLE_BACKGROUND_TASKS:-False}"
+
+      # False => URL validation ENABLED (highly recommended)
+      LD_DISABLE_URL_VALIDATION: "${LINKDING_DISABLE_URL_VALIDATION:-False}"
+
+      # Auth proxy disabled by default (normal linkding login)
+      LD_ENABLE_AUTH_PROXY: "${LINKDING_ENABLE_AUTH_PROXY:-False}"
+
+      # Trusted origins for CSRF (must include https://)
+      LD_CSRF_TRUSTED_ORIGINS: "${LINKDING_CSRF_TRUSTED_ORIGINS}"
+
+      # Log client's real IP using X-Forwarded-For (Traefik/Cloudflare)
+      LD_LOG_X_FORWARDED_FOR: "${LINKDING_LOG_X_FORWARDED_FOR:-True}"
+
+      # Maximum request (POST) size in bytes
+      # 10 MiB recommended for comfortable but secure imports
+      LD_REQUEST_MAX_CONTENT_LENGTH: "${LINKDING_REQUEST_MAX_CONTENT_LENGTH:-10485760}"
+
+      # OIDC disabled by default (only if someday you set up SSO)
+      LD_ENABLE_OIDC: "${LINKDING_ENABLE_OIDC:-False}"
+
+      # DB parameters commented: by default uses SQLite in the data volume.
+      # Uncomment and adjust if someday you want Postgres.
+      # LD_DB_ENGINE: "postgres"
+      # LD_DB_DATABASE: "linkding"
+      # LD_DB_USER: "linkding"
+      # LD_DB_PASSWORD: "put-this-in-a-secret"
+      # LD_DB_HOST: "postgres_host"
+      # LD_DB_PORT: "5432"
+      # LD_DB_OPTIONS: ""
+
+    restart: unless-stopped

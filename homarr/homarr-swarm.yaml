@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  homarr:
+    image: ghcr.io/homarr-labs/homarr:latest
+    networks:
+      - homarr-network
+    volumes:
+      - homarr-data:/appdata
+      - /var/run/docker.sock:/var/run/docker.sock   # opcional (integración docker)
+    ports:
+      - "7575:7575"
+    environment:
+      - SECRET_ENCRYPTION_KEY=${SECRET_ENCRYPTION_KEY}
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      resources:
+        limits:
+          memory: 1200M
+        reservations:
+          memory: 600M
+      placement:
+        constraints:
+          - node.role == manager
+
+networks:
+  homarr-network:
+    driver: overlay
+    attachable: true
+
+volumes:
+  homarr-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${HOMARR_DATA_PATH:-/mnt/cephfs/homarr/data}
