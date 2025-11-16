@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:v3.5.0
+    networks:
+      - mealie-network
+    volumes:
+      - mealie-data:/app/data
+    environment:
+      # Permisos y zona horaria
+      PUID: "${MEALIE_PUID:-1000}"
+      PGID: "${MEALIE_PGID:-1000}"
+      TZ: "Europe/Madrid"
+
+      # General
+      BASE_URL: "${BASE_URL}"
+      ALLOW_SIGNUP: "${ALLOW_SIGNUP:-false}"
+      API_DOCS: "${API_DOCS:-True}"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+      DAILY_SCHEDULE_TIME: "${DAILY_SCHEDULE_TIME:-23:45}"
+
+      # Webworker (sustituye MAX_WORKERS / WEB_CONCURRENCY)
+      UVICORN_WORKERS: "${UVICORN_WORKERS:-2}"
+
+      # Base de datos (SQLite)
+      DB_ENGINE: "sqlite"
+      SQLITE_MIGRATE_JOURNAL_WAL: "${SQLITE_MIGRATE_JOURNAL_WAL:-false}"
+
+      # SMTP (según doc oficial)
+      SMTP_HOST: "${SMTP_HOST}"
+      SMTP_PORT: "${SMTP_PORT:-587}"
+      SMTP_FROM_NAME: "${SMTP_FROM_NAME:-Mealie}"
+      SMTP_AUTH_STRATEGY: "${SMTP_AUTH_STRATEGY:-TLS}"   # TLS / SSL / NONE
+      SMTP_FROM_EMAIL: "${SMTP_FROM_EMAIL}"
+      SMTP_USER: "${SMTP_USER}"
+      SMTP_PASSWORD: "${SMTP_PASSWORD}"
+
+      # OpenAI
+      OPENAI_BASE_URL: "${OPENAI_BASE_URL:-https://api.openai.com/v1}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
+      OPENAI_MODEL: "${OPENAI_MODEL:-gpt-5-nano}"
+      OPENAI_ENABLE_IMAGE_SERVICES: "${OPENAI_ENABLE_IMAGE_SERVICES:-true}"
+      OPENAI_WORKERS: "${OPENAI_WORKERS:-2}"
+      OPENAI_SEND_DATABASE_DATA: "${OPENAI_SEND_DATABASE_DATA:-true}"
+      OPENAI_REQUEST_TIMEOUT: "${OPENAI_REQUEST_TIMEOUT:-300}"
+
+      # Security
+      SECURITY_MAX_LOGIN_ATTEMPTS: "${SECURITY_MAX_LOGIN_ATTEMPTS:-5}"
+      SECURITY_USER_LOCKOUT_TIME: "${SECURITY_USER_LOCKOUT_TIME:-1}"
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      resources:
+        limits:
+          memory: 1000M
+        reservations:
+          memory: 500M
+      placement:
+        constraints:
+          - node.role == manager
+
+networks:
+  mealie-network:
+    driver: overlay
+    attachable: true
+
+volumes:
+  mealie-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${MEALIE_DATA_PATH:-/mnt/cephfs/mealie-food-manager}
