@@ -7,6 +7,8 @@ services:
       - mealie-network
     volumes:
       - mealie-data:/app/data
+    ports:
+      - "9925:9000"
     environment:
       # Permisos y zona horaria
       PUID: "${MEALIE_PUID:-1000}"
