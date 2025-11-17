@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  wordpress:
+    image: wordpress:latest
+    networks:
+      - wordpress-network
+    volumes:
+      - wordpress-data:/var/www/html
+    ports:
+      - "${WORDPRESS_PORT:-8080}:80"
+    environment:
+      WORDPRESS_DB_HOST: db-wp
+      WORDPRESS_DB_USER: "${WORDPRESS_DB_USER}"
+      WORDPRESS_DB_PASSWORD: "${WORDPRESS_DB_PASSWORD}"
+      WORDPRESS_DB_NAME: "${WORDPRESS_DB_NAME}"
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+      placement:
+        constraints:
+          - node.role == manager
+
+  db-wp:
+    image: mysql:latest
+    networks:
+      - wordpress-network
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    environment:
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      MYSQL_RANDOM_ROOT_PASSWORD: "1"
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      resources:
+        limits:
+          memory: 1024M
+        reservations:
+          memory: 512M
+      placement:
+        constraints:
+          - node.role == manager
+
+networks:
+  wordpress-network:
+    driver: overlay
+    attachable: true
+
+volumes:
+  wordpress-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${WORDPRESS_DATA_PATH:-/mnt/cephfs/wordpress}
+  mysql-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${MYSQL_DATA_PATH:-/mnt/cephfs/wordpress_db}
