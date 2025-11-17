@@ -4,7 +4,7 @@ services:
   wordpress:
     image: wordpress:latest
     networks:
-      - wordpress-network
+      - wp-net
     volumes:
       - wordpress-data:/var/www/html
     ports:
@@ -24,9 +24,9 @@ services:
         window: 120s
       resources:
         limits:
-          memory: 512M
+          memory: 1024M
         reservations:
-          memory: 256M
+          memory: 512M
       placement:
         constraints:
           - node.role == manager
@@ -34,7 +34,7 @@ services:
   db-wp:
     image: mysql:latest
     networks:
-      - wordpress-network
+      - wp-net
     volumes:
       - mysql-data:/var/lib/mysql
     ports:
@@ -62,7 +62,7 @@ services:
           - node.role == manager
 
 networks:
-  wordpress-network:
+  wp-net:
     driver: overlay
     attachable: true
 
