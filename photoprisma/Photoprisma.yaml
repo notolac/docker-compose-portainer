@@ -1,3 +1,27 @@
+# ============================
+# Portainer Variables (recomendadas)
+# ============================
+# Red / puertos:
+# - PHOTOPRISM_IP                 IP del host
+# - PHOTOPRISM_PORT               Puerto del host expuesto
+#
+# Credenciales iniciales:
+# - PHOTOPRISM_ADMIN_USER         Usuario administrador
+# - PHOTOPRISM_ADMIN_PASSWORD     Contraseña administrador
+#
+# Rutas persistentes:
+# - PHOTOPRISM_ORIGINALS_PATH     Ruta de fotos originales
+# - PHOTOPRISM_IMPORT_PATH        Ruta de importaciones
+# - PHOTOPRISM_STORAGE_PATH       Ruta de caché/almacenamiento
+# - PHOTOPRISM_DB_DATA_PATH       Ruta de datos MariaDB
+#
+# Base de datos / secretos:
+# - PHOTOPRISM_DATABASE_USER
+# - PHOTOPRISM_DATABASE_PASSWORD
+# - MARIADB_USER
+# - MARIADB_PASSWORD
+# - MARIADB_ROOT_PASSWORD
+
 version: "3.8"
 
 services:
@@ -11,12 +35,12 @@ services:
       - seccomp:unconfined
       - apparmor:unconfined
     ports:
-      - "2342:2342" # HTTP port (host:container)
+      - "${PHOTOPRISM_PORT}:2342" # HTTP port (host:container)
     environment:
-      PHOTOPRISM_ADMIN_USER: "$PHOTOPRISM_ADMIN_USER"
-      PHOTOPRISM_ADMIN_PASSWORD: "$PHOTOPRISM_ADMIN_PASSWORD"
+      PHOTOPRISM_ADMIN_USER: "${PHOTOPRISM_ADMIN_USER}"
+      PHOTOPRISM_ADMIN_PASSWORD: "${PHOTOPRISM_ADMIN_PASSWORD}"
       PHOTOPRISM_AUTH_MODE: "password"
-      PHOTOPRISM_SITE_URL: "http://localhost:2342/"
+      PHOTOPRISM_SITE_URL: "${PHOTOPRISM_SITE_URL:-http://localhost:2342/}"
       PHOTOPRISM_DISABLE_TLS: "false"
       PHOTOPRISM_DEFAULT_TLS: "true"
       PHOTOPRISM_ORIGINALS_LIMIT: 5000
@@ -39,8 +63,8 @@ services:
       PHOTOPRISM_DATABASE_DRIVER: "mysql"
       PHOTOPRISM_DATABASE_SERVER: "mariadb:3306"
       PHOTOPRISM_DATABASE_NAME: "photoprism"
-      PHOTOPRISM_DATABASE_USER: "$PHOTOPRISM_DATABASE_USER"
-      PHOTOPRISM_DATABASE_PASSWORD: "$PHOTOPRISM_DATABASE_PASSWORD"
+      PHOTOPRISM_DATABASE_USER: "${PHOTOPRISM_DATABASE_USER}"
+      PHOTOPRISM_DATABASE_PASSWORD: "${PHOTOPRISM_DATABASE_PASSWORD}"
       PHOTOPRISM_SITE_CAPTION: "CasRom Photos App"
       PHOTOPRISM_SITE_DESCRIPTION: ""
       PHOTOPRISM_SITE_AUTHOR: ""
@@ -63,9 +87,9 @@ services:
 
     working_dir: "/photoprism"
     volumes:
-      - "/srv/multimedia/PhotoPrism-fotos:/photoprism/originals"
-      - "/storage_hdd/photoprism-import:/photoprism/import"
-      - "/home/notolac/.tmp/PhotoPrism-cache:/photoprism/storage"
+      - "${PHOTOPRISM_ORIGINALS_PATH}:/photoprism/originals"
+      - "${PHOTOPRISM_IMPORT_PATH}:/photoprism/import"
+      - "${PHOTOPRISM_CACHE_PATH}:/photoprism/storage"
 
   mariadb:
     image: mariadb:11
@@ -83,11 +107,11 @@ services:
       --innodb-rollback-on-timeout=OFF
       --innodb-lock-wait-timeout=120
     volumes:
-      - "/home/notolac/photoprisma/database:/var/lib/mysql"
+      - "${PHOTOPRISM_DB_DATA_PATH}:/var/lib/mysql"
     environment:
       MARIADB_AUTO_UPGRADE: "1"
       MARIADB_INITDB_SKIP_TZINFO: "1"
       MARIADB_DATABASE: "photoprism"
-      MARIADB_USER: "$MARIADB_USER"
-      MARIADB_PASSWORD: "$MARIADB_PASSWORD"
-      MARIADB_ROOT_PASSWORD: "$MARIADB_ROOT_PASSWORD"
+      MARIADB_USER: "${MARIADB_USER}"
+      MARIADB_PASSWORD: "${MARIADB_PASSWORD}"
+      MARIADB_ROOT_PASSWORD: "${MARIADB_ROOT_PASSWORD}"
