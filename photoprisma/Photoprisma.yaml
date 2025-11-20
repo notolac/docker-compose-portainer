@@ -35,7 +35,7 @@ services:
       - seccomp:unconfined
       - apparmor:unconfined
     ports:
-      - "${PHOTOPRISM_PORT}:2342" # HTTP port (host:container)
+      - "${PHOTOPRISM_PORT:-2342}:2342" # HTTP port (host:container)
     environment:
       PHOTOPRISM_ADMIN_USER: "${PHOTOPRISM_ADMIN_USER}"
       PHOTOPRISM_ADMIN_PASSWORD: "${PHOTOPRISM_ADMIN_PASSWORD}"
