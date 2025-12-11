@@ -2,7 +2,7 @@
 services:
   n8n:
     container_name: n8n-server
-    image: docker.n8n.io/n8nio/n8n:1.119.1
+    image: docker.n8n.io/n8nio/n8n:2.0.1
     platform: linux/amd64
     restart: unless-stopped
     networks:
