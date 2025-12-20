@@ -27,7 +27,7 @@ services:
       - /:/host:ro,rslave
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
+    image: ghcr.io/google/cadvisor:latest
     container_name: cadvisor
     ports:
       - $HOST_3PORT:8080
