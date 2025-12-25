@@ -8,7 +8,7 @@ networks:
 
 services:
   traefik:
-    image: traefik:v3.5
+    image: traefik:v3.6.5
     restart: unless-stopped
     networks: [edge, default]
     ports:
@@ -89,7 +89,7 @@ services:
 
     
   loki:
-    image: grafana/loki:3.5.3
+    image: grafana/loki:3.6.3
     restart: unless-stopped
     networks: [default]
     command: -config.file=/etc/loki/local-config.yaml
@@ -110,7 +110,7 @@ services:
       - ${PROMTAIL_POS_DIR}:/tmp
 
   whoami:
-    image: traefik/whoami:v1.10
+    image: traefik/whoami:v1.11
     restart: unless-stopped
     networks: ["default","edge"]
     labels:
