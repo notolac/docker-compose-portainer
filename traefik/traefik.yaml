@@ -100,14 +100,14 @@ services:
       - ${LOKI_DATA_DIR}:/loki
   
   alloy:
-  image: grafana/alloy:1.12.1
-  restart: unless-stopped
-  command: ["run", "--server.http.listen-addr=0.0.0.0:12345", "/etc/alloy/config.alloy"]
-  volumes:
-    - ${ALLOY_CFG}:/etc/alloy/config.alloy:ro
-    - ${TRAEFIK_LOG_DIR}:/var/log/traefik:ro
-    - ${ALLOY_POS_DIR}:/var/lib/alloy
-  networks: [default]
+    image: grafana/alloy:1.12.1
+    restart: unless-stopped
+    command: ["run", "--server.http.listen-addr=0.0.0.0:12345", "/etc/alloy/config.alloy"]
+    volumes:
+      - ${ALLOY_CFG}:/etc/alloy/config.alloy:ro
+      - ${TRAEFIK_LOG_DIR}:/var/log/traefik:ro
+      - ${ALLOY_POS_DIR}:/var/lib/alloy
+    networks: [default]
 
   promtail:
     image: grafana/promtail:3.5.3
