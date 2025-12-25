@@ -109,16 +109,6 @@ services:
       - ${ALLOY_POS_DIR}:/var/lib/alloy
     networks: [default]
 
-  promtail:
-    image: grafana/promtail:3.5.3
-    restart: unless-stopped
-    networks: [default]
-    command: -config.file=/etc/promtail/config.yml
-    volumes:
-      - ${PROMTAIL_CFG}:/etc/promtail/config.yml:ro
-      - ${TRAEFIK_LOG_DIR}:/var/log/traefik:ro
-      - ${PROMTAIL_POS_DIR}:/tmp
-
   whoami:
     image: traefik/whoami:v1.11
     restart: unless-stopped
