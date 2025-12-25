@@ -2,7 +2,7 @@
 services:
   n8n:
     container_name: n8n-server
-    image: docker.n8n.io/n8nio/n8n:2.0.1
+    image: docker.n8n.io/n8nio/n8n:2.0.3
     platform: linux/amd64
     restart: unless-stopped
     networks:
@@ -40,7 +40,7 @@ services:
   # Runner externo (no expuesto por Traefik)
   n8n-runner:
     container_name: n8n-runner
-    image: n8nio/runners:2.0.1
+    image: n8nio/runners:2.0.3
     restart: unless-stopped
     depends_on:
       - n8n
