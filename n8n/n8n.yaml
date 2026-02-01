@@ -2,7 +2,7 @@
 services:
   n8n:
     container_name: n8n-server
-    image: docker.n8n.io/n8nio/n8n:2.4.5
+    image: docker.n8n.io/n8nio/n8n:2.4.8
     platform: linux/amd64
     restart: unless-stopped
     networks:
@@ -10,9 +10,9 @@ services:
     environment:
       # —— Core de n8n publicado por Traefik ——
       - NODE_ENV=production
-      - N8N_HOST=${N8N_HOST}               # <— dominio público
+      - N8N_HOST=${N8N_HOST} # <— dominio público
       - N8N_PORT=${N8N_PORT:-5678}
-      - N8N_PROTOCOL=https                       # <— Traefik termina TLS
+      - N8N_PROTOCOL=https # <— Traefik termina TLS
       - WEBHOOK_URL=${WEBHOOK_URL}
       - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
       - TZ=${GENERIC_TIMEZONE}
@@ -40,7 +40,7 @@ services:
   # Runner externo (no expuesto por Traefik)
   n8n-runner:
     container_name: n8n-runner
-    image: n8nio/runners:2.4.5
+    image: n8nio/runners:2.4.8
     restart: unless-stopped
     depends_on:
       - n8n
@@ -58,4 +58,3 @@ services:
 networks:
   traefik-stack:
     external: true
-
