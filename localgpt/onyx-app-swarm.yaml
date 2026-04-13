@@ -1,0 +1,592 @@
+# =============================================================================
+# ONYX APP - Docker Swarm Stack
+# =============================================================================
+# Adapted from the official Onyx docker-compose.yml for Docker Swarm / Portainer.
+# Original: https://github.com/onyx-dot-app/onyx
+#
+# This stack deploys the full Onyx platform:
+#   - api_server:              Backend API + DB migrations
+#   - background:              Background workers (indexing, connectors, etc.)
+#   - web_server:              Next.js frontend
+#   - inference_model_server:  ML model server (inference)
+#   - indexing_model_server:   ML model server (indexing)
+#   - relational_db:           PostgreSQL 15
+#   - index:                   Vespa search engine
+#   - opensearch:              OpenSearch full-text search
+#   - nginx:                   Reverse proxy (entry point)
+#   - cache:                   Redis (ephemeral)
+#   - minio:                   S3-compatible object storage
+#
+# =============================================================================
+# PREREQUISITES (run on EVERY swarm node that may host these services):
+# =============================================================================
+# 1. OpenSearch requires vm.max_map_count >= 262144:
+#      sudo sysctl -w vm.max_map_count=262144
+#      echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.conf
+#
+# 2. Create shared storage directories:
+#      sudo mkdir -p /mnt/cephfs/onyx-app/{postgres-data,vespa-data,opensearch-data,minio-data,file-system,nginx-templates,model-cache-hf,indexing-model-cache-hf,logs/{api-server,background,inference-model-server,indexing-model-server}}
+#      sudo chown -R 1000:1000 /mnt/cephfs/onyx-app
+#
+# 3. Download Onyx nginx config files (see README-onyx-swarm.md for details):
+#      cd /mnt/cephfs/onyx-app/nginx-templates
+#      curl -LO https://raw.githubusercontent.com/onyx-dot-app/onyx/main/deployment/data/nginx/app.conf.template
+#      curl -LO https://raw.githubusercontent.com/onyx-dot-app/onyx/main/deployment/data/nginx/run-nginx.sh
+#      chmod +x run-nginx.sh
+#
+# =============================================================================
+# REQUIRED ENVIRONMENT VARIABLES (Configure in Portainer Stack):
+# =============================================================================
+# DO NOT use quotes around variable values in Portainer!
+#
+# - POSTGRES_USER:     PostgreSQL username         (e.g. onyx)
+# - POSTGRES_PASSWORD: PostgreSQL password          (REQUIRED, generate a secure one)
+#
+# =============================================================================
+# OPTIONAL ENVIRONMENT VARIABLES (with defaults):
+# =============================================================================
+# - IMAGE_TAG:                  Onyx image tag (default: latest)
+# - ONYX_PORT:                  External port for Onyx UI (default: 3080)
+# - AUTH_TYPE:                  Authentication type (default: basic)
+# - POSTGRES_DB:                PostgreSQL database name (default: onyx_db)
+# - OPENSEARCH_ADMIN_PASSWORD:  OpenSearch admin password (default: StrongPassword123!)
+# - ONYX_DATA_PATH:             Base path for all data (default: /mnt/cephfs/onyx-app)
+#
+# See README-onyx-swarm.md for the complete variable reference.
+#
+# =============================================================================
+# DEPLOYMENT:
+# =============================================================================
+# CLI:       docker stack deploy -c onyx-app-swarm.yaml onyx
+# Portainer: Stacks > Add stack > Upload this file > Add env vars > Deploy
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # API SERVER - Backend API + Alembic migrations
+  # ---------------------------------------------------------------------------
+  api_server:
+    image: onyxdotapp/onyx-backend:${IMAGE_TAG:-latest}
+    command: >
+      /bin/sh -c "alembic upgrade head &&
+      echo 'Starting Onyx Api Server' &&
+      uvicorn onyx.main:app --host 0.0.0.0 --port 8080"
+    networks:
+      - onyx
+    environment:
+      - AUTH_TYPE=${AUTH_TYPE:-basic}
+      - FILE_STORE_BACKEND=${FILE_STORE_BACKEND:-s3}
+      - POSTGRES_HOST=${POSTGRES_HOST:-relational_db}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - POSTGRES_DB=${POSTGRES_DB:-onyx_db}
+      - VESPA_HOST=${VESPA_HOST:-index}
+      - OPENSEARCH_HOST=${OPENSEARCH_HOST:-opensearch}
+      - OPENSEARCH_ADMIN_PASSWORD=${OPENSEARCH_ADMIN_PASSWORD:-StrongPassword123!}
+      - ENABLE_OPENSEARCH_INDEXING_FOR_ONYX=${OPENSEARCH_FOR_ONYX_ENABLED:-true}
+      - REDIS_HOST=${REDIS_HOST:-cache}
+      - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-inference_model_server}
+      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL:-http://minio:9000}
+      - S3_AWS_ACCESS_KEY_ID=${S3_AWS_ACCESS_KEY_ID:-minioadmin}
+      - S3_AWS_SECRET_ACCESS_KEY=${S3_AWS_SECRET_ACCESS_KEY:-minioadmin}
+      - ENABLE_CRAFT=${ENABLE_CRAFT:-false}
+      - PERSISTENT_DOCUMENT_STORAGE_PATH=${PERSISTENT_DOCUMENT_STORAGE_PATH:-/app/file-system}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - api-server-logs:/var/log/onyx
+      - file-system:/app/file-system
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')",
+        ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 5
+      placement:
+        constraints:
+          - node.role == manager
+
+  # ---------------------------------------------------------------------------
+  # BACKGROUND - Workers for indexing, connectors, supervisord
+  # ---------------------------------------------------------------------------
+  background:
+    image: onyxdotapp/onyx-backend:${IMAGE_TAG:-latest}
+    command: >
+      /bin/sh -c "
+      if [ -f /app/scripts/setup_craft_templates.sh ]; then
+        /app/scripts/setup_craft_templates.sh;
+      fi &&
+      if [ -f /etc/ssl/certs/custom-ca.crt ]; then
+        update-ca-certificates;
+      fi &&
+      /app/scripts/supervisord_entrypoint.sh"
+    networks:
+      - onyx
+    environment:
+      - FILE_STORE_BACKEND=${FILE_STORE_BACKEND:-s3}
+      - POSTGRES_HOST=${POSTGRES_HOST:-relational_db}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - POSTGRES_DB=${POSTGRES_DB:-onyx_db}
+      - VESPA_HOST=${VESPA_HOST:-index}
+      - OPENSEARCH_HOST=${OPENSEARCH_HOST:-opensearch}
+      - OPENSEARCH_ADMIN_PASSWORD=${OPENSEARCH_ADMIN_PASSWORD:-StrongPassword123!}
+      - ENABLE_OPENSEARCH_INDEXING_FOR_ONYX=${OPENSEARCH_FOR_ONYX_ENABLED:-true}
+      - REDIS_HOST=${REDIS_HOST:-cache}
+      - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-inference_model_server}
+      - INDEXING_MODEL_SERVER_HOST=${INDEXING_MODEL_SERVER_HOST:-indexing_model_server}
+      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL:-http://minio:9000}
+      - S3_AWS_ACCESS_KEY_ID=${S3_AWS_ACCESS_KEY_ID:-minioadmin}
+      - S3_AWS_SECRET_ACCESS_KEY=${S3_AWS_SECRET_ACCESS_KEY:-minioadmin}
+      - API_SERVER_PROTOCOL=${API_SERVER_PROTOCOL:-http}
+      - API_SERVER_HOST=${API_SERVER_HOST:-api_server}
+      - ENABLE_CRAFT=${ENABLE_CRAFT:-false}
+      - PERSISTENT_DOCUMENT_STORAGE_PATH=${PERSISTENT_DOCUMENT_STORAGE_PATH:-/app/file-system}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - background-logs:/var/log/onyx
+      - file-system:/app/file-system
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 5
+      placement:
+        constraints:
+          - node.role == manager
+
+  # ---------------------------------------------------------------------------
+  # WEB SERVER - Next.js frontend
+  # ---------------------------------------------------------------------------
+  web_server:
+    image: onyxdotapp/onyx-web-server:${IMAGE_TAG:-latest}
+    networks:
+      - onyx
+    environment:
+      - INTERNAL_URL=${INTERNAL_URL:-http://api_server:8080}
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+      placement:
+        constraints:
+          - node.role == manager
+
+  # ---------------------------------------------------------------------------
+  # INFERENCE MODEL SERVER
+  # ---------------------------------------------------------------------------
+  inference_model_server:
+    image: onyxdotapp/onyx-model-server:${IMAGE_TAG:-latest}
+    command: >
+      /bin/sh -c "if [ \"${DISABLE_MODEL_SERVER:-}\" = \"True\" ] || [ \"${DISABLE_MODEL_SERVER:-}\" = \"true\" ]; then
+        echo 'Skipping service...';
+        exit 0;
+      else
+        exec uvicorn model_server.main:app --host 0.0.0.0 --port 9000;
+      fi"
+    networks:
+      - onyx
+    volumes:
+      - model-cache-hf:/app/.cache/huggingface/
+      - inference-model-server-logs:/var/log/onyx
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:9000/api/health')",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+      placement:
+        constraints:
+          - node.role == manager
+
+  # ---------------------------------------------------------------------------
+  # INDEXING MODEL SERVER
+  # ---------------------------------------------------------------------------
+  indexing_model_server:
+    image: onyxdotapp/onyx-model-server:${IMAGE_TAG:-latest}
+    command: >
+      /bin/sh -c "if [ \"${DISABLE_MODEL_SERVER:-}\" = \"True\" ] || [ \"${DISABLE_MODEL_SERVER:-}\" = \"true\" ]; then
+        echo 'Skipping service...';
+        exit 0;
+      else
+        exec uvicorn model_server.main:app --host 0.0.0.0 --port 9000;
+      fi"
+    networks:
+      - onyx
+    environment:
+      - INDEXING_ONLY=True
+    volumes:
+      - indexing-model-cache-hf:/app/.cache/huggingface/
+      - indexing-model-server-logs:/var/log/onyx
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:9000/api/health')",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+      placement:
+        constraints:
+          - node.role == manager
+
+  # ---------------------------------------------------------------------------
+  # POSTGRESQL - Relational database
+  # ---------------------------------------------------------------------------
+  relational_db:
+    image: postgres:15.2-alpine
+    command: -c 'max_connections=250'
+    networks:
+      - onyx
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - POSTGRES_DB=${POSTGRES_DB:-onyx_db}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # Workaround for shm_size (not supported in swarm)
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: 1073741824
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+      placement:
+        constraints:
+          - node.role == manager
+
+  # ---------------------------------------------------------------------------
+  # VESPA - Search engine index
+  # ---------------------------------------------------------------------------
+  index:
+    image: vespaengine/vespa:8.609.39
+    networks:
+      - onyx
+    environment:
+      - VESPA_SKIP_UPGRADE_CHECK=${VESPA_SKIP_UPGRADE_CHECK:-true}
+    volumes:
+      - vespa-data:/opt/vespa/var
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+      placement:
+        constraints:
+          - node.role == manager
+
+  # ---------------------------------------------------------------------------
+  # OPENSEARCH - Full-text search
+  # NOTE: ulimits are NOT supported in Docker Swarm.
+  #       You MUST set vm.max_map_count=262144 on the HOST before deploying.
+  # ---------------------------------------------------------------------------
+  opensearch:
+    image: opensearchproject/opensearch:3.4.0
+    networks:
+      - onyx
+    environment:
+      - discovery.type=single-node
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_ADMIN_PASSWORD:-StrongPassword123!}
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms2g -Xmx2g"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+      resources:
+        limits:
+          memory: 5G
+        reservations:
+          memory: 3G
+      placement:
+        constraints:
+          - node.role == manager
+
+  # ---------------------------------------------------------------------------
+  # NGINX - Reverse proxy (entry point to Onyx UI)
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:1.25.5-alpine
+    networks:
+      - onyx
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+      - NGINX_PROXY_CONNECT_TIMEOUT=${NGINX_PROXY_CONNECT_TIMEOUT:-300}
+      - NGINX_PROXY_SEND_TIMEOUT=${NGINX_PROXY_SEND_TIMEOUT:-300}
+      - NGINX_PROXY_READ_TIMEOUT=${NGINX_PROXY_READ_TIMEOUT:-300}
+    ports:
+      - "${ONYX_PORT:-3080}:80"
+    volumes:
+      - nginx-templates:/nginx-templates:ro
+    command: >
+      /bin/sh -c "rm -f /etc/nginx/conf.d/default.conf
+      && cp -a /nginx-templates/. /etc/nginx/conf.d/
+      && sed 's/\r$//' /etc/nginx/conf.d/run-nginx.sh > /tmp/run-nginx.sh
+      && chmod +x /tmp/run-nginx.sh
+      && /tmp/run-nginx.sh app.conf.template"
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+      placement:
+        constraints:
+          - node.role == manager
+
+  # ---------------------------------------------------------------------------
+  # REDIS - Ephemeral cache
+  # ---------------------------------------------------------------------------
+  cache:
+    image: redis:7.4-alpine
+    networks:
+      - onyx
+    command: redis-server --save "" --appendonly no
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+      placement:
+        constraints:
+          - node.role == manager
+
+  # ---------------------------------------------------------------------------
+  # MINIO - S3-compatible object storage
+  # ---------------------------------------------------------------------------
+  minio:
+    image: minio/minio:RELEASE.2025-07-23T15-54-02Z-cpuv1
+    networks:
+      - onyx
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_DEFAULT_BUCKETS: ${S3_FILE_STORE_BUCKET_NAME:-onyx-file-store-bucket}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+      placement:
+        constraints:
+          - node.role == manager
+
+# =============================================================================
+# VOLUMES - Bind mounts on shared storage (CephFS)
+# =============================================================================
+volumes:
+  postgres-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/postgres-data
+  vespa-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/vespa-data
+  opensearch-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/opensearch-data
+  minio-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/minio-data
+  file-system:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/file-system
+  nginx-templates:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/nginx-templates
+  model-cache-hf:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/model-cache-hf
+  indexing-model-cache-hf:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/indexing-model-cache-hf
+  api-server-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/logs/api-server
+  background-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/logs/background
+  inference-model-server-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/logs/inference-model-server
+  indexing-model-server-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/logs/indexing-model-server
+
+# =============================================================================
+# NETWORK
+# =============================================================================
+networks:
+  onyx:
+    driver: overlay
+
+# =============================================================================
+# EXAMPLE PORTAINER ENVIRONMENT VARIABLES
+# =============================================================================
+# DO NOT USE QUOTES around the values in Portainer!
+#
+# REQUIRED:
+# ---------
+# POSTGRES_USER=onyx
+# POSTGRES_PASSWORD=your_secure_password_here
+#
+# OPTIONAL (uncomment/add if needed):
+# ------------------------------------
+# IMAGE_TAG=latest
+# ONYX_PORT=3080
+# AUTH_TYPE=basic
+# POSTGRES_DB=onyx_db
+# OPENSEARCH_ADMIN_PASSWORD=StrongPassword123!
+# ONYX_DATA_PATH=/mnt/cephfs/onyx-app
+# MINIO_ROOT_USER=minioadmin
+# MINIO_ROOT_PASSWORD=minioadmin
+# =============================================================================
