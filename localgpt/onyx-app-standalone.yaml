@@ -46,6 +46,10 @@
 #    (${DOCKER_SOCK_PATH:-/var/run/docker.sock}) so executed code can run in sibling containers. This has
 #    serious security implications — see README-onyx-swarm.md. Rootless Docker: set DOCKER_SOCK_PATH accordingly.
 #
+# 6. Email / invitaciones: para enviar invitaciones y correos del sistema, define SMTP (o SendGrid) en
+#    Portainer/.env — ver README-onyx-swarm.md «SMTP e invitaciones». Recomendado: USER_AUTH_SECRET
+#    (openssl rand -hex 32) y WEB_DOMAIN con la URL pública de Onyx (p. ej. http://IP:3080).
+#
 # ===========================================
 # REQUIRED ENVIRONMENT VARIABLES:
 # ===========================================
@@ -121,6 +125,16 @@ services:
       - S3_AWS_SECRET_ACCESS_KEY=${S3_AWS_SECRET_ACCESS_KEY:-minioadmin}
       - ENABLE_CRAFT=${ENABLE_CRAFT:-false}
       - PERSISTENT_DOCUMENT_STORAGE_PATH=${PERSISTENT_DOCUMENT_STORAGE_PATH:-/app/file-system}
+      - USER_AUTH_SECRET=${USER_AUTH_SECRET:-}
+      - WEB_DOMAIN=${WEB_DOMAIN:-}
+      - SMTP_SERVER=${SMTP_SERVER:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - EMAIL_FROM=${EMAIL_FROM:-}
+      - ENABLE_EMAIL_INVITES=${ENABLE_EMAIL_INVITES:-}
+      - REQUIRE_EMAIL_VERIFICATION=${REQUIRE_EMAIL_VERIFICATION:-}
+      - VALID_EMAIL_DOMAINS=${VALID_EMAIL_DOMAINS:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -186,6 +200,16 @@ services:
       - API_SERVER_HOST=${API_SERVER_HOST:-api_server}
       - ENABLE_CRAFT=${ENABLE_CRAFT:-false}
       - PERSISTENT_DOCUMENT_STORAGE_PATH=${PERSISTENT_DOCUMENT_STORAGE_PATH:-/app/file-system}
+      - USER_AUTH_SECRET=${USER_AUTH_SECRET:-}
+      - WEB_DOMAIN=${WEB_DOMAIN:-}
+      - SMTP_SERVER=${SMTP_SERVER:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - EMAIL_FROM=${EMAIL_FROM:-}
+      - ENABLE_EMAIL_INVITES=${ENABLE_EMAIL_INVITES:-}
+      - REQUIRE_EMAIL_VERIFICATION=${REQUIRE_EMAIL_VERIFICATION:-}
+      - VALID_EMAIL_DOMAINS=${VALID_EMAIL_DOMAINS:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -463,6 +487,15 @@ networks:
 # CODE_INTERPRETER_BASE_URL=http://code-interpreter:8000
 # CODE_INTERPRETER_IMAGE_TAG=latest
 # DOCKER_SOCK_PATH=/var/run/docker.sock
+# WEB_DOMAIN=http://10.0.1.10:3080
+# USER_AUTH_SECRET=<openssl rand -hex 32>
+# SMTP_SERVER=smtp.gmail.com
+# SMTP_PORT=587
+# SMTP_USER=noreply@tudominio.com
+# SMTP_PASS=<app_password_o_token>
+# EMAIL_FROM=noreply@tudominio.com
+# ENABLE_EMAIL_INVITES=true
+# REQUIRE_EMAIL_VERIFICATION=false
 #
 # ===========================================
 # EXAMPLE .env FILE
