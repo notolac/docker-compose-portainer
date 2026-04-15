@@ -291,7 +291,7 @@ docker logs onyx-api-server 2>&1 | grep -i gpu
 
 ### Code interpreter (activado; implicaciones de seguridad)
 
-En `**onyx-app-standalone.yaml**` el servicio `**code-interpreter**` está **incluido** y monta el socket de Docker del host (`DOCKER_SOCK_PATH`, por defecto `/var/run/docker.sock`). Es el comportamiento *docker-out-of-docker* del [compose oficial](https://github.com/onyx-dot-app/onyx): el intérprete puede crear contenedores en el mismo daemon para ejecutar código.
+En **`onyx-app-standalone.yaml`** el servicio **`code-interpreter`** está **incluido** y monta el socket de Docker del host (`DOCKER_SOCK_PATH`, por defecto `/var/run/docker.sock`). Es el comportamiento *docker-out-of-docker* del [compose oficial](https://github.com/onyx-dot-app/onyx): el intérprete puede crear contenedores en el mismo daemon para ejecutar código.
 
 **Riesgos:**
 
@@ -306,6 +306,42 @@ docker logs onyx-code-interpreter -f
 ```
 
 **Swarm:** `onyx-app-swarm.yaml` **no** incluye code-interpreter (el socket en Swarm es especialmente problemático); seguiría siendo un despliegue aparte si lo necesitas en clúster.
+
+### SMTP e invitaciones por correo
+
+Para que Onyx pueda **enviar invitaciones** (y otros correos del sistema), el backend debe tener **correo configurado**. Onyx considera el correo “configurado” si defines **SMTP** (`SMTP_SERVER`, `SMTP_USER`, `SMTP_PASS`) **o** `SENDGRID_API_KEY` (alternativa a SMTP).
+
+1. **Genera un secreto** para tokens de verificación y reset (recomendado en producción):
+
+   ```bash
+   openssl rand -hex 32
+   ```
+
+   Ese valor va en **`USER_AUTH_SECRET`** (variable de entorno del stack).
+
+2. **`WEB_DOMAIN`:** URL base con la que los usuarios abren Onyx (enlaces en los correos). Ejemplos: `http://192.0.2.10:3080`, `https://onyx.midominio.com`. Debe coincidir con cómo accedéis por navegador.
+
+3. **SMTP** (ejemplo genérico; usa el servidor que te dé tu proveedor: Gmail con “app password”, Microsoft 365, SendGrid SMTP, Mailgun, etc.):
+
+   | Variable | Ejemplo / notas |
+   |----------|-----------------|
+   | `SMTP_SERVER` | `smtp.gmail.com`, `smtp.office365.com`, etc. |
+   | `SMTP_PORT` | `587` (TLS habitual) o `465` según proveedor |
+   | `SMTP_USER` | Usuario de autenticación SMTP |
+   | `SMTP_PASS` | Contraseña de aplicación o token (no la contraseña web si el proveedor exige app password) |
+   | `EMAIL_FROM` | Dirección “De”; si se omite, Onyx usa `SMTP_USER` |
+
+4. **`ENABLE_EMAIL_INVITES=true`** — necesario para que el flujo de invitaciones pueda **enviar** el correo (además de tener SMTP o SendGrid bien configurado).
+
+5. **`REQUIRE_EMAIL_VERIFICATION`** — opcional (`true` / `false`). Si lo pones en `true`, los usuarios con `AUTH_TYPE=basic` deben verificar el correo antes de entrar; requiere SMTP funcionando.
+
+**En Portainer:** edita el stack `onyx` → **Environment variables** → añade las claves anteriores (sin comillas en los valores). **Redeploy** el stack para que `api_server` y `background` las reciban.
+
+**Alternativa SendGrid:** en lugar de SMTP, define solo `SENDGRID_API_KEY` (Onyx lo trata como correo configurado).
+
+El modo **solo invitaciones** (sin registro abierto) se gestiona en la **interfaz de administración** de Onyx (invitaciones + ajuste invite-only), una vez el correo funciona. Sin SMTP/SendGrid, las invitaciones por email no se envían correctamente.
+
+Documentación upstream: [Basic Auth](https://docs.onyx.app/deployment/authentication/basic) (verificación y SMTP).
 
 ---
 
@@ -338,6 +374,13 @@ docker logs onyx-code-interpreter -f
 | `CODE_INTERPRETER_BASE_URL`  | `http://code-interpreter:8000`                                         | URL interna del code interpreter (casi nunca hace falta cambiarla)                                                                         |
 | `CODE_INTERPRETER_IMAGE_TAG` | `latest`                                                               | Tag de `onyxdotapp/code-interpreter`                                                                                                       |
 | `DOCKER_SOCK_PATH`           | `/var/run/docker.sock`                                                 | Socket Docker del host para code-interpreter (rootless: ver sección dedicada)                                                              |
+| `USER_AUTH_SECRET`           | *(vacío)*                                                              | Secreto para tokens de verificación/reset; generar con `openssl rand -hex 32` (recomendado en producción)                                  |
+| `WEB_DOMAIN`                 | *(vacío; Onyx usa un default interno)*                               | URL pública de Onyx (p. ej. `http://IP:3080`) para enlaces en correos                                                                      |
+| `SMTP_SERVER` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | *(vacío)*                     | Servidor SMTP para invitaciones y correos del sistema; ver [SMTP e invitaciones](#smtp-e-invitaciones-por-correo)                         |
+| `EMAIL_FROM`                 | `SMTP_USER` si se omite                                                | Remitente de los correos                                                                                                                   |
+| `SENDGRID_API_KEY`           | *(vacío)*                                                              | Alternativa a SMTP (SendGrid)                                                                                                              |
+| `ENABLE_EMAIL_INVITES`       | *(vacío)*                                                              | `true` para permitir envío de invitaciones por email                                                                                       |
+| `REQUIRE_EMAIL_VERIFICATION` | *(vacío)*                                                              | `true` para exigir verificación de correo antes de iniciar sesión (con `AUTH_TYPE=basic`)                                                    |
 
 
 ---
@@ -346,8 +389,8 @@ docker logs onyx-code-interpreter -f
 
 ### Code Interpreter (solo Swarm)
 
-- `**onyx-app-standalone.yaml`:** incluye `**code-interpreter`** (ver [Onyx-app-standalone: GPU y Code interpreter](#onyx-app-standalone-gpu-y-code-interpreter)).
-- `**onyx-app-swarm.yaml`:** **no** incluye `code-interpreter` (montar `/var/run/docker.sock` en Swarm es problemático). Si lo necesitas en clúster, despliégalo como stack o servicio aparte con criterio propio de seguridad.
+- **`onyx-app-standalone.yaml`:** incluye **`code-interpreter`** (ver [Onyx-app-standalone: GPU y Code interpreter](#onyx-app-standalone-gpu-y-code-interpreter)).
+- **`onyx-app-swarm.yaml`:** **no** incluye `code-interpreter` (montar `/var/run/docker.sock` en Swarm es problemático). Si lo necesitas en clúster, despliégalo como stack o servicio aparte con criterio propio de seguridad.
 
 ### MCP Server
 
