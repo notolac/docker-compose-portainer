@@ -1,0 +1,107 @@
+# =============================================================================
+# BIFROST - Docker Compose Standalone
+# =============================================================================
+# Official docs:
+# https://docs.getbifrost.ai/quickstart/gateway/setting-up
+#
+# This compose file runs Bifrost as a local HTTP API gateway with:
+#   - Web UI and OpenAI-compatible API on port 8080
+#   - Persistent app data mounted at /app/data
+#
+# Bifrost stores its app-dir data in the mounted volume:
+#   - config.json  Optional file-based configuration
+#   - config.db    SQLite database for UI configuration
+#   - logs.db      Request logs database
+#
+# =============================================================================
+# PREREQUISITES:
+# =============================================================================
+# Create the persistent data directory before deploying:
+#
+#   mkdir -p /home/notolac/bifrost-data
+#   sudo chown -R $(id -u):$(id -g) /home/notolac/bifrost-data
+#
+# =============================================================================
+# DEPLOYMENT:
+# =============================================================================
+# CLI:
+#   docker compose -f bifrost-standalone.yaml up -d
+#
+# Portainer:
+#   Stacks > Add stack > Upload this file > Add env vars if needed > Deploy
+#
+# Web UI:
+#   http://localhost:8080
+#
+# API test:
+#   curl -X POST http://localhost:8080/v1/chat/completions \
+#     -H "Content-Type: application/json" \
+#     -d '{
+#       "model": "openai/gpt-4o-mini",
+#       "messages": [{"role": "user", "content": "Hello, Bifrost!"}]
+#     }'
+#
+# =============================================================================
+# OPTIONAL ENVIRONMENT VARIABLES:
+# =============================================================================
+# DO NOT use quotes around variable values in Portainer.
+#
+# - BIFROST_IMAGE_TAG: Image tag to deploy (default: latest)
+# - BIFROST_HOST_PORT: External HTTP port (default: 8080)
+# - BIFROST_DATA_PATH: Host path for persistent data (default: /home/notolac/bifrost-data)
+# - LOG_LEVEL:         Log level: debug, info, warn, error (default: info)
+# - LOG_STYLE:         Log style: pretty, json (default: json)
+#
+# =============================================================================
+
+version: '3.8'
+
+services:
+  bifrost:
+    image: maximhq/bifrost:${BIFROST_IMAGE_TAG:-latest}
+    container_name: bifrost
+    restart: always
+    networks:
+      - bifrost
+    environment:
+      - APP_PORT=8080
+      - APP_HOST=0.0.0.0
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_STYLE=${LOG_STYLE:-json}
+    ports:
+      - "${BIFROST_HOST_PORT:-8080}:8080"
+    volumes:
+      - ${BIFROST_DATA_PATH:-/home/notolac/bifrost-data}:/app/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
+
+networks:
+  bifrost:
+    driver: bridge
+
+# =============================================================================
+# EXAMPLE PORTAINER ENVIRONMENT VARIABLES
+# =============================================================================
+# BIFROST_IMAGE_TAG=latest
+# BIFROST_HOST_PORT=8080
+# BIFROST_DATA_PATH=/home/notolac/bifrost-data
+# LOG_LEVEL=info
+# LOG_STYLE=json
+#
+# =============================================================================
+# EXAMPLE .env FILE
+# =============================================================================
+# If deploying via docker compose CLI, create a .env file with:
+#
+# BIFROST_IMAGE_TAG=latest
+# BIFROST_HOST_PORT=8080
+# BIFROST_DATA_PATH=/home/notolac/bifrost-data
+# LOG_LEVEL=info
+# LOG_STYLE=json
+#
+# Place this .env file in the same directory as bifrost-standalone.yaml.
+# Then deploy with: docker compose -f bifrost-standalone.yaml up -d
+# =============================================================================
