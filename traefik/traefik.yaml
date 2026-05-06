@@ -8,7 +8,7 @@ networks:
 
 services:
   traefik:
-    image: traefik:v3.6.12
+    image: traefik:v3.7.0
     restart: unless-stopped
     networks: [edge, default]
     ports:
@@ -89,7 +89,7 @@ services:
 
     
   loki:
-    image: grafana/loki:3.6.5
+    image: grafana/loki:3.7.1
     restart: unless-stopped
     networks: [default]
     command: -config.file=/etc/loki/local-config.yaml
@@ -100,7 +100,7 @@ services:
       - ${LOKI_DATA_DIR}:/loki
   
   alloy:
-    image: grafana/alloy:v1.13.1
+    image: grafana/alloy:v1.16.1
     restart: unless-stopped
     command: ["run", "--server.http.listen-addr=0.0.0.0:12345", "/etc/alloy/config.alloy"]
     volumes:
