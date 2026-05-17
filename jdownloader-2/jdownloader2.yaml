@@ -6,4 +6,4 @@ services:
       - "$HOST_PORT:5800"
     volumes:
       - "/home/notolac/jdownloader:/config:rw"
-      - "/storage_hdd/jdownloads-output:/output:rw"
+      - "/srv/app_data/jdownloads-output:/output:rw"
