@@ -21,7 +21,7 @@
 #      curl -s http://127.0.0.1:11434/api/tags
 #    Modelos recomendados (ajusta a tu VRAM):
 #      ollama pull llama3.2          # chat (ejemplo)
-#      ollama pull nomic-embed-text  # embeddings para RAG (ejemplo)
+#      ollama pull nomic-embed-text  # embeddings RAG (recomendado; sin esto la indexación vía Ollama falla)
 #
 # 3. Crear directorios (sin cachés HuggingFace de model servers):
 #      mkdir -p /home/notolac/onyx-app/{postgres-data,vespa-data,opensearch-data,minio-data,file-system,nginx-templates}
@@ -50,8 +50,9 @@
 #   POSTGRES_USER, POSTGRES_PASSWORD
 #
 # OPCIONALES:
-#   IMAGE_TAG, ONYX_PORT, AUTH_TYPE, POSTGRES_DB, ONYX_DATA_PATH,
-#   OPENSEARCH_ADMIN_PASSWORD, WEB_DOMAIN, USER_AUTH_SECRET, SMTP_*, etc.
+#   IMAGE_TAG (obligatorio craft-latest si la DB ya migró desde el servidor Intel),
+#   ONYX_PORT, AUTH_TYPE, POSTGRES_DB, ONYX_DATA_PATH,
+#   OPENSEARCH_ADMIN_PASSWORD, WEB_DOMAIN, USER_AUTH_SECRET, SMTP_*, ENABLE_CRAFT, etc.
 #
 #   OLLAMA_BASE_URL — solo documentación; Onyx usa la URL configurada en Admin UI.
 #                     Valor de referencia: http://host.docker.internal:11434
@@ -59,14 +60,18 @@
 # =============================================================================
 # DEPLOY:
 # =============================================================================
-#   docker compose -f onyx-app-standalone-amd.yaml up -d
+#   docker compose -f onyx-amd.yaml up -d
+#
+# Sustituir en Portainer el stack onyx-app-gpu: pegar este YAML y mantener el .env
+# (POSTGRES_*, WEB_DOMAIN, SMTP, IMAGE_TAG=craft-latest). Tras el deploy, eliminar
+# contenedores huérfanos onyx-inference-model-server / onyx-indexing-model-server.
 # =============================================================================
 
-version: '3.8'
+version: "3.8"
 
 services:
   api_server:
-    image: onyxdotapp/onyx-backend:${IMAGE_TAG:-latest}
+    image: onyxdotapp/onyx-backend:${IMAGE_TAG:-craft-latest}
     container_name: onyx-api-server
     restart: always
     networks:
@@ -135,7 +140,7 @@ services:
         max-file: "6"
 
   background:
-    image: onyxdotapp/onyx-backend:${IMAGE_TAG:-latest}
+    image: onyxdotapp/onyx-backend:${IMAGE_TAG:-craft-latest}
     container_name: onyx-background
     restart: always
     networks:
@@ -195,7 +200,7 @@ services:
         max-file: "6"
 
   web_server:
-    image: onyxdotapp/onyx-web-server:${IMAGE_TAG:-latest}
+    image: onyxdotapp/onyx-web-server:${IMAGE_TAG:-craft-latest}
     container_name: onyx-web-server
     restart: always
     networks:
@@ -356,7 +361,8 @@ networks:
 # =============================================================================
 # EJEMPLO .env (AMD + Ollama en host)
 # =============================================================================
-# POSTGRES_USER=onyx
+# IMAGE_TAG=craft-latest
+# POSTGRES_USER=onyxman
 # POSTGRES_PASSWORD=your_secure_password
 # ONYX_PORT=3080
 # AUTH_TYPE=basic
@@ -368,7 +374,7 @@ networks:
 # Ollama (configurar la misma URL en Admin UI):
 # OLLAMA_BASE_URL=http://host.docker.internal:11434
 #
-# docker compose -f onyx-app-standalone-amd.yaml up -d
+# docker compose -f onyx-amd.yaml up -d
 #
 # Comprobar que los contenedores alcanzan Ollama:
 # docker exec onyx-api-server python -c "import urllib.request; print(urllib.request.urlopen('http://host.docker.internal:11434/api/tags').read()[:200])"
