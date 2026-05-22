@@ -1,3 +1,4 @@
+---
 services:
   mysql:
     restart: unless-stopped
@@ -10,6 +11,12 @@ services:
       MYSQL_DATABASE: semaphoreui
       MYSQL_USER: semaphore
       MYSQL_PASSWORD: $MYSQL_PASSWORD
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
       - semaphornet
 
@@ -32,17 +39,10 @@ services:
       SEMAPHORE_ADMIN_EMAIL: $SEMAPHORE_ADMIN_EMAIL
       SEMAPHORE_ADMIN: $SEMAPHORE_ADMIN
       SEMAPHORE_ACCESS_KEY_ENCRYPTION: $SEMAPHORE_ACCESS_KEY_ENCRYPTION
-      #SEMAPHORE_LDAP_ACTIVATED: 'no' # if you wish to use ldap, set to: 'yes'
-      #SEMAPHORE_LDAP_HOST: dc01.local.example.com
-      #SEMAPHORE_LDAP_PORT: '636'
-      #SEMAPHORE_LDAP_NEEDTLS: 'yes'
-      #SEMAPHORE_LDAP_DN_BIND: 'uid=bind_user,cn=users,cn=accounts,dc=local,dc=shiftsystems,dc=net'
-      #SEMAPHORE_LDAP_PASSWORD: 'ldap_bind_account_password'
-      #SEMAPHORE_LDAP_DN_SEARCH: 'dc=local,dc=example,dc=com'
-      #SEMAPHORE_LDAP_SEARCH_FILTER: "(\u0026(uid=%s)(memberOf=cn=ipausers,cn=groups,cn=accounts,dc=local,dc=example,dc=com))"
       TZ: Europe/Madrid
     depends_on:
-      - mysql # for postgres, change to: postgres
+      mysql:
+        condition: service_healthy
     networks:
       - semaphornet
 volumes:
