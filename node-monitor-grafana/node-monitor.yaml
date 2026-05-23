@@ -42,6 +42,7 @@ services:
   node_exporter:
     image: quay.io/prometheus/node-exporter:${NODE_EXPORTER_IMAGE_TAG:-v1.9.0}
     container_name: node_exporter
+    hostname: srv-media-docker
     restart: unless-stopped
     pid: host
     ports:
@@ -59,15 +60,16 @@ services:
     container_name: cadvisor
     restart: unless-stopped
     privileged: true
+    cgroup: host
     ports:
       - ${CADVISOR_HOST_PORT:-8084}:8080
     command:
-      - --docker_only=true
       - --housekeeping_interval=30s
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
       - /sys:/sys:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
     devices:
