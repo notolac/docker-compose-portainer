@@ -40,11 +40,30 @@ services:
       SEMAPHORE_ADMIN: $SEMAPHORE_ADMIN
       SEMAPHORE_ACCESS_KEY_ENCRYPTION: $SEMAPHORE_ACCESS_KEY_ENCRYPTION
       TZ: Europe/Madrid
+    volumes:
+      - /home/notolac/.ssh/semaphore_runner:/tmp/orch_ssh:ro
     depends_on:
       mysql:
         condition: service_healthy
     networks:
       - semaphornet
+
+
+  semaphore-mcp:
+    restart: unless-stopped
+    container_name: semaphore-mcp
+    image: ghcr.io/cloin/semaphore-mcp:latest
+    ports:
+      - $MCP_PORT:$MCP_PORT
+    environment:
+      SEMAPHORE_URL: $SEMAPHORE_URL
+      SEMAPHORE_API_TOKEN: $SEMAPHORE_API_TOKEN
+      MCP_PORT: $MCP_PORT
+    depends_on:
+      - semaphore
+    networks:
+      - semaphornet
+
 volumes:
   semaphore-mysql: # to use postgres, switch to: semaphore-postgres
 
