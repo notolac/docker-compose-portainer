@@ -10,7 +10,8 @@ services:
     ports:
       - ${PROMETHEUS_HOST_PORT:-9090}:9090
     volumes:
-      - ${PROMETHEUS_CONFIG_DIR:-/etc/prometheus}:/etc/prometheus:ro
+      # Opción A: fichero del repo Git (Portainer pull → restart prometheus)
+      - ${PROMETHEUS_CONFIG_FILE:-/etc/prometheus/prometheus.yml}:/etc/prometheus/prometheus.yml:ro
       - ${PROMETHEUS_DATA_DIR:-/home/notolac/node-monitor-grafana/prometheus-data}:/prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
@@ -56,7 +57,8 @@ services:
       - monitoring
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:${CADVISOR_IMAGE_TAG:-v0.51.0}
+    # >= v0.54: Docker 29 + containerd-snapshotter (overlayfs); v0.51 falla layerdb/mount-id
+    image: gcr.io/cadvisor/cadvisor:${CADVISOR_IMAGE_TAG:-v0.55.1}
     container_name: cadvisor
     restart: unless-stopped
     privileged: true
@@ -64,10 +66,13 @@ services:
     ports:
       - ${CADVISOR_HOST_PORT:-8084}:8080
     command:
+      - --docker_only=true
+      - --store_container_labels=true
       - --housekeeping_interval=30s
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - /sys:/sys:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
       - /var/lib/docker/:/var/lib/docker:ro
