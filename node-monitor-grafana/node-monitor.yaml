@@ -38,7 +38,8 @@ services:
       GF_INSTALL_PLUGINS: ${GF_INSTALL_PLUGINS:-}
     volumes:
       - ${GRAFANA_DATA_DIR:-/home/notolac/node-monitor-grafana/grafana-data}:/var/lib/grafana
-      - ${GRAFANA_DATASOURCES_FILE:-../grafana/provisioning/datasources/loki.yaml}:/etc/grafana/provisioning/datasources/loki.yaml:ro
+      # Portainer Git resolves relative bind paths from the repository root.
+      - ${GRAFANA_DATASOURCES_FILE:-./configs/srv-media-docker/grafana/provisioning/datasources/loki.yaml}:/etc/grafana/provisioning/datasources/loki.yaml:ro
     networks:
       - monitoring
 
@@ -51,7 +52,8 @@ services:
     command:
       - -config.file=/etc/loki/local-config.yaml
     volumes:
-      - ${LOKI_CONFIG_FILE:-../loki/loki-config.yaml}:/etc/loki/local-config.yaml:ro
+      # Portainer Git resolves relative bind paths from the repository root.
+      - ${LOKI_CONFIG_FILE:-./configs/srv-media-docker/loki/loki-config.yaml}:/etc/loki/local-config.yaml:ro
       - ${LOKI_DATA_DIR:-/home/notolac/node-monitor-grafana/loki-data}:/loki
     networks:
       - monitoring
@@ -73,6 +75,7 @@ services:
       - monitoring
 
   cadvisor:
+    # >= v0.54: Docker 29 + containerd-snapshotter (overlayfs); v0.51 falla layerdb/mount-id
     image: gcr.io/cadvisor/cadvisor:${CADVISOR_IMAGE_TAG:-v0.55.1}
     container_name: cadvisor
     restart: unless-stopped
