@@ -15,9 +15,9 @@
 # docker secret create fireflyiii_importer_mail_password <file>
 #
 # IMPORTANT: Create the local directories before deployment:
-# mkdir -p /mnt/cephfs/firefly-uploads /mnt/cephfs/firefly-db
-# chown -R 1000:1000 /mnt/cephfs/firefly-uploads
-# chown -R 999:999 /mnt/cephfs/firefly-db
+# mkdir -p /opt/firefly-uploads /opt/firefly-db
+# chown -R 1000:1000 /opt/firefly-uploads
+# chown -R 999:999 /opt/firefly-db
 #
 # Or create environment variables in Portainer Swarm stack deployment:
 # - SITE_OWNER: Your email address for system notifications
@@ -41,8 +41,8 @@
 # - IMPORTER_MAIL_USERNAME: SMTP username for importer
 # - IMPORTER_MAIL_PASSWORD: SMTP password for importer
 # - IMPORTER_MAIL_ENCRYPTION: SMTP encryption for importer
-# - FIREFLY_UPLOAD_PATH: Local path for Firefly III uploads (e.g., /mnt/cephfs/firefly-uploads)
-# - FIREFLY_DB_PATH: Local path for PostgreSQL data (e.g., /mnt/cephfs/firefly-db)
+# - FIREFLY_UPLOAD_PATH: Local path for Firefly III uploads (e.g., /opt/firefly-uploads)
+# - FIREFLY_DB_PATH: Local path for PostgreSQL data (e.g., /opt/firefly-db)
 #
 # Note: Set FIREFLY_UPLOAD_PATH and FIREFLY_DB_PATH in Portainer to configure
 # where data will be stored on the host system.
@@ -400,13 +400,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${FIREFLY_UPLOAD_PATH:-/mnt/cephfs/fireflyiii/upload}
+      device: ${FIREFLY_UPLOAD_PATH:-/opt/fireflyiii/upload}
   firefly_iii_db:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${FIREFLY_DB_PATH:-/mnt/cephfs/fireflyiii/db}
+      device: ${FIREFLY_DB_PATH:-/opt/fireflyiii/db}
 
 networks:
   firefly_iii:

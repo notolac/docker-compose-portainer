@@ -9,7 +9,7 @@ Requiere: yt-dlp, ffmpeg, notion-client, requests
 import argparse, os, pathlib, subprocess, sys, json, re, time
 from notion_client import Client
 
-ROOT = pathlib.Path("/srv/Plex")  # raíz Plex
+ROOT = pathlib.Path(os.environ.get("PLEX_ROOT", "/data/plex"))
 TOKEN = os.getenv("NOTION_TOKEN")  # ya lo usas
 DB_ID = os.getenv("NOTION_DB")
 NV_PRESET = os.getenv("NV_PRESET", "p5")

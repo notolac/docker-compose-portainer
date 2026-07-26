@@ -1,13 +1,22 @@
+# Audiobookshelf — self-hosted audiobook and podcast server
+#
+# Environment variables:
+# - AUDIOBOOKS_PATH     Audiobook library (default: /data/media/audiobooks)
+# - PODCASTS_PATH       Podcast library (default: /data/media/podcasts)
+# - ABS_CONFIG_PATH     App config (default: /opt/audiobookshelf/config)
+# - ABS_METADATA_PATH   Metadata store (default: /opt/audiobookshelf/metadata)
+# - TZ                  Timezone (default: UTC)
+
 services:
   audiobookshelf:
     image: ghcr.io/advplyr/audiobookshelf:latest
     ports:
-      - 13378:80
+      - ${ABS_PORT:-13378}:80
     volumes:
-      - /srv/multimedia/AudioLibros:/audiobooks
-      - /srv/multimedia/podcast:/podcasts
-      - /srv/multimedia/audiobookshelf/appconfig:/config
-      - /srv/multimedia/audiobookshelf/appmetadata:/metadata
+      - ${AUDIOBOOKS_PATH:-/data/media/audiobooks}:/audiobooks
+      - ${PODCASTS_PATH:-/data/media/podcasts}:/podcasts
+      - ${ABS_CONFIG_PATH:-/opt/audiobookshelf/config}:/config
+      - ${ABS_METADATA_PATH:-/opt/audiobookshelf/metadata}:/metadata
     restart: unless-stopped
     environment:
-      - TZ=Europe/Madrid
+      - TZ=${TZ:-UTC}

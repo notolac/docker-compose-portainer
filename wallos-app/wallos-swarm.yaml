@@ -41,10 +41,10 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${WALLOS_DATA_PATH:-/mnt/cephfs/wallos-app/db}
+      device: ${WALLOS_DATA_PATH:-/opt/wallos-app/db}
   wallos-logos:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${WALLOS_LOGOS_PATH:-/mnt/cephfs/wallos-app/logos}
+      device: ${WALLOS_LOGOS_PATH:-/opt/wallos-app/logos}

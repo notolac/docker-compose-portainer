@@ -78,4 +78,4 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${MEALIE_DATA_PATH:-/mnt/cephfs/mealie-food-manager}
+      device: ${MEALIE_DATA_PATH:-/opt/mealie-food-manager}

@@ -206,11 +206,11 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${SNIPEIT_STORAGE_PATH:-/mnt/cephfs/snipeit}
+      device: ${SNIPEIT_STORAGE_PATH:-/opt/snipeit}
   snipeit-db-data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${SNIPEIT_DB_PATH:-/mnt/cephfs/snipeit_db}
+      device: ${SNIPEIT_DB_PATH:-/opt/snipeit_db}
 

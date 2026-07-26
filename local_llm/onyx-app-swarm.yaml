@@ -25,11 +25,11 @@
 #      echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.conf
 #
 # 2. Create shared storage directories:
-#      sudo mkdir -p /mnt/cephfs/onyx-app/{postgres-data,vespa-data,opensearch-data,minio-data,file-system,nginx-templates,model-cache-hf,indexing-model-cache-hf,logs/{api-server,background,inference-model-server,indexing-model-server}}
-#      sudo chown -R 1000:1000 /mnt/cephfs/onyx-app
+#      sudo mkdir -p /opt/onyx/{postgres-data,vespa-data,opensearch-data,minio-data,file-system,nginx-templates,model-cache-hf,indexing-model-cache-hf,logs/{api-server,background,inference-model-server,indexing-model-server}}
+#      sudo chown -R 1000:1000 /opt/onyx
 #
 # 3. Download Onyx nginx config files (see README-onyx-swarm.md for details):
-#      cd /mnt/cephfs/onyx-app/nginx-templates
+#      cd /opt/onyx/nginx-templates
 #      curl -LO https://raw.githubusercontent.com/onyx-dot-app/onyx/main/deployment/data/nginx/app.conf.template
 #      curl -LO https://raw.githubusercontent.com/onyx-dot-app/onyx/main/deployment/data/nginx/run-nginx.sh
 #      chmod +x run-nginx.sh
@@ -50,7 +50,7 @@
 # - AUTH_TYPE:                  Authentication type (default: basic)
 # - POSTGRES_DB:                PostgreSQL database name (default: onyx_db)
 # - OPENSEARCH_ADMIN_PASSWORD:  OpenSearch admin password (default: StrongPassword123!)
-# - ONYX_DATA_PATH:             Base path for all data (default: /mnt/cephfs/onyx-app)
+# - ONYX_DATA_PATH:             Base path for all data (default: /opt/onyx)
 #
 # See README-onyx-swarm.md for the complete variable reference.
 #
@@ -486,7 +486,7 @@ services:
           - node.role == manager
 
 # =============================================================================
-# VOLUMES - Bind mounts on shared storage (CephFS)
+# VOLUMES - Bind mounts on shared storage (set ONYX_DATA_PATH on every Swarm node)
 # =============================================================================
 volumes:
   postgres-data:
@@ -494,73 +494,73 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/postgres-data
+      device: ${ONYX_DATA_PATH:-/opt/onyx}/postgres-data
   vespa-data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/vespa-data
+      device: ${ONYX_DATA_PATH:-/opt/onyx}/vespa-data
   opensearch-data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/opensearch-data
+      device: ${ONYX_DATA_PATH:-/opt/onyx}/opensearch-data
   minio-data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/minio-data
+      device: ${ONYX_DATA_PATH:-/opt/onyx}/minio-data
   file-system:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/file-system
+      device: ${ONYX_DATA_PATH:-/opt/onyx}/file-system
   nginx-templates:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/nginx-templates
+      device: ${ONYX_DATA_PATH:-/opt/onyx}/nginx-templates
   model-cache-hf:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/model-cache-hf
+      device: ${ONYX_DATA_PATH:-/opt/onyx}/model-cache-hf
   indexing-model-cache-hf:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/indexing-model-cache-hf
+      device: ${ONYX_DATA_PATH:-/opt/onyx}/indexing-model-cache-hf
   api-server-logs:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/logs/api-server
+      device: ${ONYX_DATA_PATH:-/opt/onyx}/logs/api-server
   background-logs:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/logs/background
+      device: ${ONYX_DATA_PATH:-/opt/onyx}/logs/background
   inference-model-server-logs:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/logs/inference-model-server
+      device: ${ONYX_DATA_PATH:-/opt/onyx}/logs/inference-model-server
   indexing-model-server-logs:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${ONYX_DATA_PATH:-/mnt/cephfs/onyx-app}/logs/indexing-model-server
+      device: ${ONYX_DATA_PATH:-/opt/onyx}/logs/indexing-model-server
 
 # =============================================================================
 # NETWORK
@@ -586,7 +586,7 @@ networks:
 # AUTH_TYPE=basic
 # POSTGRES_DB=onyx_db
 # OPENSEARCH_ADMIN_PASSWORD=StrongPassword123!
-# ONYX_DATA_PATH=/mnt/cephfs/onyx-app
+# ONYX_DATA_PATH=/opt/onyx
 # MINIO_ROOT_USER=minioadmin
 # MINIO_ROOT_PASSWORD=minioadmin
 # =============================================================================
