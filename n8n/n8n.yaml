@@ -26,7 +26,7 @@ services:
       # Telemetría (opcional desactivar):
       - N8N_DIAGNOSTICS_ENABLED=false
     volumes:
-      - ${N8N_DATA_DIR:-/srv/n8n}:/home/node/.n8n
+      - ${N8N_DATA_DIR:-/opt/n8n}:/home/node/.n8n
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-stack"

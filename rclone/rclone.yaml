@@ -1,14 +1,28 @@
+# rclone — scheduled cloud sync (backup / restore)
+#
+# Environment variables:
+# - RCLONE_CONFIG_PATH   Host path to rclone.conf (default: /opt/rclone/config/rclone.conf)
+# - RCLONE_SCRIPT        backup or restore (default: backup)
+# - MULTIMEDIA_PATH      Local multimedia data (default: /data/multimedia)
+# - PLEX_PATH            Local Plex library (default: /data/plex)
+# - PROXMOX_PATH         Optional Proxmox backup path (default: /data/proxmox)
+#
+# Generate rclone.conf:
+#   docker run -it -v /opt/rclone/config:/config/rclone rclone/rclone:latest config
+
 services:
   rclone_sync:
     image: rclone/rclone:latest
     container_name: rclone_sync
     volumes:
-      - /home/notolac/.config/rclone/rclone.conf:/config/rclone/rclone.conf:ro
-      - /home/notolac/scripts/rclone_entrypoint_backup.sh:/backup.sh:ro
-      - /home/notolac/scripts/rclone_entrypoint_restore.sh:/restore.sh:ro
-      - /srv/multimedia:/data/multimedia
-      - /srv/Plex:/data/Plex
-    entrypoint: ["/bin/sh", "-c", "/$RCLONE_SCRIPT.sh"]
+      - ${RCLONE_CONFIG_PATH:-/opt/rclone/config/rclone.conf}:/config/rclone/rclone.conf:ro
+      - ./rclone_entrypoint_backup.sh:/backup.sh:ro
+      - ./rclone_entrypoint_restore.sh:/restore.sh:ro
+      - ${MULTIMEDIA_PATH:-/data/multimedia}:/data/multimedia
+      - ${PLEX_PATH:-/data/plex}:/data/Plex
+      - ${PROXMOX_PATH:-/data/proxmox}:/data/proxmox
+    entrypoint: ["/bin/sh", "-c", "/${RCLONE_SCRIPT:-backup}.sh"]
     environment:
       - RCLONE_CONFIG=/config/rclone/rclone.conf
+      - RCLONE_REMOTE=${RCLONE_REMOTE:-gdrive}
     restart: unless-stopped

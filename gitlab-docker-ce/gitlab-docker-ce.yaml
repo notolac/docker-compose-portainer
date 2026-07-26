@@ -23,7 +23,7 @@ services:
       - "443:443"
       - "2424:22"
     volumes:
-      - "/home/notolac/gitlab/config:/etc/gitlab"
-      - "/home/notolac/gitlab/logs:/var/log/gitlab"
-      - "/home/notolac/gitlab/data:/var/opt/gitlab"
+      - "/opt/gitlab/config:/etc/gitlab"
+      - "/opt/gitlab/logs:/var/log/gitlab"
+      - "/opt/gitlab/data:/var/opt/gitlab"
     shm_size: "256m"

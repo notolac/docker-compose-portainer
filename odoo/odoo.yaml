@@ -1,33 +1,39 @@
 ---
+# Odoo ERP — single instance template
+#
+# Environment variables:
+# - ODOO_DATA_ROOT   Config and addons root (default: /opt/odoo)
+# - USER, PASSWORD, POSTGRES_USER, POSTGRES_PASSWORD
+
 services:
-  web: #cambiar el numero de la web por cada instancia
+  web:
     image: odoo:latest
     restart: unless-stopped
     depends_on:
-      - db #cambiar el numero de la DB por cada instancia
+      - db
     ports:
-      - "8077:8069"
+      - "${ODOO_PORT:-8077}:8069"
     volumes:
-      - odoo-cliente-web:/var/lib/odoo
-      - /home/notolac/odoo/config:/etc/odoo
-      - /home/notolac/odoo/addons:/mnt/extra-addons
-      #- /home/notolac/Odoo-Addons/:/var/lib/odoo/.local/share/Odoo/addons/16.0  # activa addons luego de activar la DB
+      - odoo-web-data:/var/lib/odoo
+      - ${ODOO_DATA_ROOT:-/opt/odoo}/config:/etc/odoo
+      - ${ODOO_DATA_ROOT:-/opt/odoo}/addons:/mnt/extra-addons
+      #- ${ODOO_EXTRA_ADDONS_PATH:-/opt/odoo/custom-addons}:/var/lib/odoo/.local/share/Odoo/addons/16.0
     environment:
-      - HOST=db #cambiar el numero de la DB por cada instancia
-      - USER=$USER #user
-      - PASSWORD=$PASSWORD #password
+      - HOST=db
+      - USER=${USER}
+      - PASSWORD=${PASSWORD}
       - proxy_mode=True
-  db: #cambiar el numero de la DB por cada instancia
+  db:
     image: postgres:15
     restart: unless-stopped
     environment:
       - POSTGRES_DB=postgres
-      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD #password
-      - POSTGRES_USER=$POSTGRES_USER #user
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
-      - odoo-cliente-db:/var/lib/postgresql/data
+      - odoo-db-data:/var/lib/postgresql/data
 
-volumes: #volumen debe ser interno no usar NFS
-  odoo-cliente-web:
-  odoo-cliente-db:
+volumes:
+  odoo-web-data:
+  odoo-db-data:

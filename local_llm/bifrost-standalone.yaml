@@ -18,8 +18,8 @@
 # =============================================================================
 # Create the persistent data directory before deploying:
 #
-#   mkdir -p /home/notolac/bifrost-data
-#   sudo chown -R $(id -u):$(id -g) /home/notolac/bifrost-data
+#   mkdir -p /opt/bifrost
+#   sudo chown -R $(id -u):$(id -g) /opt/bifrost
 #
 # =============================================================================
 # DEPLOYMENT:
@@ -48,7 +48,7 @@
 #
 # - BIFROST_IMAGE_TAG: Image tag to deploy (default: latest)
 # - BIFROST_HOST_PORT: External HTTP port (default: 8080)
-# - BIFROST_DATA_PATH: Host path for persistent data (default: /home/notolac/bifrost-data)
+# - BIFROST_DATA_PATH: Host path for persistent data (default: /opt/bifrost)
 # - LOG_LEVEL:         Log level: debug, info, warn, error (default: info)
 # - LOG_STYLE:         Log style: pretty, json (default: json)
 #
@@ -71,7 +71,7 @@ services:
     ports:
       - "${BIFROST_HOST_PORT:-8080}:8080"
     volumes:
-      - ${BIFROST_DATA_PATH:-/home/notolac/bifrost-data}:/app/data
+      - ${BIFROST_DATA_PATH:-/opt/bifrost}:/app/data
     logging:
       driver: json-file
       options:
@@ -87,7 +87,7 @@ networks:
 # =============================================================================
 # BIFROST_IMAGE_TAG=latest
 # BIFROST_HOST_PORT=8080
-# BIFROST_DATA_PATH=/home/notolac/bifrost-data
+# BIFROST_DATA_PATH=/opt/bifrost
 # LOG_LEVEL=info
 # LOG_STYLE=json
 #
@@ -98,7 +98,7 @@ networks:
 #
 # BIFROST_IMAGE_TAG=latest
 # BIFROST_HOST_PORT=8080
-# BIFROST_DATA_PATH=/home/notolac/bifrost-data
+# BIFROST_DATA_PATH=/opt/bifrost
 # LOG_LEVEL=info
 # LOG_STYLE=json
 #

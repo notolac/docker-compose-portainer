@@ -1,158 +1,153 @@
-# docker-compose-notolac
+# docker-compose-portainer
 
-# Introduction to Docker using Portainer and Docker Compose
+Public collection of **Docker Compose** and **Docker Swarm** stack files for self-hosted applications, designed to deploy via [Portainer](https://www.portainer.io/) or the Docker CLI.
 
-Docker is an open-source platform that allows you to automate the deployment, scaling, and management of applications using containerization. Containers are lightweight, isolated environments that package everything needed to run an application, including the code, runtime, system tools, and libraries.
+This repository is the **public, reusable** counterpart to a private homelab knowledge base. It contains generic manifests and documentation only — no hostnames, internal IPs, or personal paths.
 
-Portainer is a web-based user interface that simplifies the management of Docker environments. It provides a graphical interface to manage containers, images, networks, and volumes, making it easier to deploy and monitor applications.
+## Relationship with private homelab docs
 
-Docker Compose is a tool that allows you to define and run multi-container Docker applications. It uses a YAML file to specify the services, networks, and volumes required for your application. With Docker Compose, you can easily define complex application architectures and manage them as a single unit.
+| Aspect | This repo (public) | Private homelab repo |
+|--------|-------------------|----------------------|
+| Purpose | Shareable stacks for anyone | Architecture, hosts, runbooks, secrets |
+| Paths / IPs | Environment variables with neutral defaults | Real host paths and network layout |
+| Secrets | `.env.example` / Portainer env vars | Local `.env` files (never committed) |
+| Runtime | Docker Compose / Swarm | K3s (primary) + Compose on dedicated hosts |
+
+If you maintain a private homelab repo, treat this one as the **source of truth for stack YAML** that third parties can fork. Keep operational details (SSH, DNS, backups, VLANs) in your private documentation.
 
 ## Prerequisites
 
-Before getting started, make sure you have the following prerequisites:
+- Docker Engine with the [Compose plugin](https://docs.docker.com/compose/install/)
+- (Optional) Docker Swarm initialized for `*-swarm.yaml` stacks
+- (Recommended) [Portainer CE](https://docs.portainer.io/) for web-based deployment
 
-- Docker installed on your machine. You can download and install Docker from the official website: [https://www.docker.com/get-started](https://www.docker.com/get-started)
+## Installing Portainer CE 2.42.0 STS
 
-## Getting Started
+We pin **Portainer CE STS 2.42.0** for consistency with current Short Term Support releases.
 
-To get started with Docker using Portainer and Docker Compose, you need to install Docker first and then deploy Portainer. Choose your operating system below for detailed instructions.
+### Portainer Server
 
-### Installing Docker
+```bash
+docker volume create portainer_data
 
-#### For Ubuntu
+docker run -d \
+  -p 8000:8000 \
+  -p 9443:9443 \
+  --name portainer \
+  --restart=always \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v portainer_data:/data \
+  portainer/portainer-ce:2.42.0
+```
 
-1. **Install required dependencies:**
-   These packages are necessary for adding the Docker repository and installing Docker properly.
+Open `https://<your-host>:9443`, create the admin user, and connect to the local Docker environment.
 
-   ```bash
-   sudo apt update
-   sudo apt install lsb-release gnupg2 apt-transport-https ca-certificates curl software-properties-common -y
-   ```
+### Portainer Agent (optional)
 
-2. **Add Docker's official GPG key:**
-   This key verifies the authenticity of the Docker packages.
+Install on remote Docker hosts you want to manage from a central Portainer instance:
 
-   ```bash
-   sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/docker.gpg
-   ```
+```bash
+docker run -d \
+  -p 9001:9001 \
+  --name portainer_agent \
+  --restart=always \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /var/lib/docker/volumes:/var/lib/docker/volumes \
+  -v /:/host \
+  portainer/agent:2.42.0
+```
 
-3. **Add the Docker repository:**
-   This adds the official Docker repository to your system's package sources.
+Then add the environment in Portainer → **Environments** → **Add environment** → **Agent**.
 
-   ```bash
-   sudo add-apt-repository "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-   ```
+> **Note:** `:sts` tracks the latest STS release; `:2.42.0` pins this exact version. See [Portainer CE on Docker](https://docs.portainer.io/sts/start/install-ce/server/docker/linux).
 
-4. **Update package index:**
-   Refresh the package list to include the new Docker repository.
+## Deploying a stack
 
-   ```bash
-   sudo apt update
-   ```
+### Via Portainer
 
-5. **Install Docker:**
-   Install Docker Engine, CLI, containerd, and the Docker Compose plugin.
+1. **Stacks → Add stack**
+2. Paste the YAML from the service folder (or connect a Git repository)
+3. Set **Environment variables** — **do not wrap values in quotes**
+4. Create host directories referenced by `${...}` variables before deploying
+5. Deploy
 
-   ```bash
-   sudo apt install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
-   ```
+### Via CLI
 
-#### For Debian
+```bash
+# Standalone Compose
+docker compose -f <service>/<file>.yaml --env-file <service>/.env.example up -d
 
-1. **Install required dependencies:**
-   These packages are necessary for adding the Docker repository and installing Docker properly.
+# Swarm
+docker stack deploy -c <service>/<file>-swarm.yaml <stack-name>
+```
 
-   ```bash
-   sudo apt update
-   sudo apt install lsb-release gnupg2 apt-transport-https ca-certificates curl software-properties-common -y
-   ```
+## Conventions
 
-2. **Add Docker's official GPG key:**
-   This key verifies the authenticity of the Docker packages.
+All stacks follow these rules so they work for third parties:
 
-   ```bash
-   sudo curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/docker.gpg
-   ```
+| Rule | Example |
+|------|---------|
+| **No hardcoded user home paths** | `${APP_DATA_PATH:-/opt/appname}` |
+| **No internal IPs** | `${OLLAMA_BASE_URL:-http://ollama-host:11434}` |
+| **Secrets via env vars** | Set in Portainer or a local `.env` (gitignored) |
+| **Neutral storage defaults** | `/opt/<service>/…` or named volumes |
+| **Comments document variables** | Each YAML header lists required env vars |
 
-3. **Add the Docker repository:**
-   This adds the official Docker repository to your system's package sources.
+Copy the matching `.env.example` (when present) to `.env` and adjust paths for your host.
 
-   ```bash
-   sudo add-apt-repository "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
-   ```
+## Stack catalog
 
-4. **Update package index:**
-   Refresh the package list to include the new Docker repository.
+See **[STACKS.md](STACKS.md)** for the full list of services, variants (standalone vs Swarm), and links to service-specific READMEs.
 
-   ```bash
-   sudo apt update
-   ```
+## Repository structure
 
-5. **Install Docker:**
-   Install Docker Engine, CLI, containerd, and the Docker Compose plugin.
+```text
+docker-compose-portainer/
+├── README.md              ← This file
+├── STACKS.md              ← Service catalog
+├── <service-name>/
+│   ├── *.yaml             ← Compose or Swarm manifest
+│   ├── .env.example       ← Optional template (no secrets)
+│   └── README.md          ← Optional service notes
+└── .gitignore
+```
 
-   ```bash
-   sudo apt install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
-   ```
+## Installing Docker (Ubuntu / Debian)
 
-### Installing Portainer
+<details>
+<summary>Ubuntu</summary>
 
-Portainer consists of two main components: the Portainer Server (web interface) and the Portainer Agent (for managing remote Docker instances).
+```bash
+sudo apt update
+sudo apt install lsb-release gnupg2 apt-transport-https ca-certificates curl software-properties-common -y
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/docker.gpg
+sudo add-apt-repository "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+sudo apt update
+sudo apt install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
+```
 
-6. **Install Portainer Server (Web Interface):**
-   The Portainer Server provides the web-based management interface. We're using the LTS version for stability.
+</details>
 
-   ```bash
-   sudo docker run -d \
-     -p 8000:8000 \
-     -p 9443:9443 \
-     --name portainer \
-     --restart=always \
-     -v /var/run/docker.sock:/var/run/docker.sock \
-     -v portainer_data:/data \
-     portainer/portainer-ce:lts
-   ```
+<details>
+<summary>Debian</summary>
 
-7. **(Optional) Install Portainer Agent:**
-   The Portainer Agent allows you to manage this Docker instance from a remote Portainer Server. Only install this if you plan to manage multiple Docker hosts from a central Portainer instance.
+```bash
+sudo apt update
+sudo apt install lsb-release gnupg2 apt-transport-https ca-certificates curl software-properties-common -y
+sudo curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/docker.gpg
+sudo add-apt-repository "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
+sudo apt update
+sudo apt install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
+```
 
-   ```bash
-   sudo docker run -d \
-     -p 9001:9001 \
-     --name portainer_agent \
-     --restart=always \
-     -v /var/run/docker.sock:/var/run/docker.sock \
-     -v /var/lib/docker/volumes:/var/lib/docker/volumes \
-     portainer/agent:lts
-   ```
+</details>
 
-### Accessing Portainer
+## References
 
-8. **Access the Portainer web interface:**
-   Open your web browser and navigate to: [https://localhost:9443](https://localhost:9443)
+- [Docker documentation](https://docs.docker.com)
+- [Portainer documentation](https://docs.portainer.io)
+- [Docker Compose specification](https://docs.docker.com/compose/compose-file/)
 
-   - If you're accessing from a remote machine, replace `localhost` with the server's IP address or hostname.
-   - Accept the security warning for the self-signed certificate (this is normal for initial setup).
+## License
 
-9. **Initial Setup:**
-   - Create an admin user account
-   - Connect Portainer to your local Docker environment
-   - You can now manage containers, images, networks, and volumes through the web interface
-
-10. **Start using Portainer:**
-    Once logged in, you can:
-    - Deploy containerized applications
-    - Monitor running containers
-    - Manage Docker images and volumes
-    - Create and manage networks
-    - Use Docker Compose to deploy multi-container applications
-
-## Conclusion
-
-In this tutorial, we introduced Docker and demonstrated how to use Portainer and Docker Compose to simplify the management of Docker environments. With Portainer, you can easily deploy, monitor, and scale your applications, while Docker Compose allows you to define and run multi-container applications with ease.
-
-For more information on Docker, Portainer, and Docker Compose, refer to the official documentation:
-
-- Docker: [https://docs.docker.com](https://docs.docker.com)
-- Portainer: [https://www.portainer.io](https://www.portainer.io)
+MIT — see individual stack upstream licenses for application-specific terms.

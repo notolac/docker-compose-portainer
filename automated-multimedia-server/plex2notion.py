@@ -27,7 +27,7 @@ pip install notion-client rich httpx
 export NOTION_TOKEN=secret_xxx
 export NOTION_DB=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 export SKIP_TOP="Music"
-find /srv/Plex -type f -print0 | ./plex2notion_rich.py
+find "$PLEX_ROOT" -type f -print0 | ./plex2notion_rich.py
 ```
 """
 
@@ -47,7 +47,7 @@ from rich.progress import (
 )
 
 # ---------------- Config global ----------------
-ROOT = pathlib.Path("/srv/Plex")
+ROOT = pathlib.Path(os.environ.get("PLEX_ROOT", "/data/plex"))
 RATE_LIMIT = int(os.getenv("RATE_LIMIT", 3))
 SKIP_TOP = {s.strip() for s in os.getenv("SKIP_TOP", "").split(",") if s.strip()}
 TOKEN = os.getenv("NOTION_TOKEN")

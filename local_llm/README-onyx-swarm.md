@@ -31,8 +31,8 @@ Slack, Google Drive, Confluence y más. Esta guía cubre el despliegue tanto en
 | `ulimits:`          | Directo en OpenSearch          | No soportado (requiere sysctl en host)    |
 | `container_name:`   | `onyx-<servicio>`              | Asignado por swarm                        |
 | Red                 | `bridge`                       | `overlay`                                 |
-| Volúmenes           | Bind mount directo             | Bind mount con `driver_opts` sobre CephFS |
-| Ruta datos default  | `/home/notolac/onyx-app`       | `/mnt/cephfs/onyx-app`                    |
+| Volúmenes           | Bind mount directo             | Bind mount con `driver_opts`              |
+| Ruta datos default  | `/opt/onyx`                    | `/opt/onyx`                               |
 | Alta disponibilidad | No                             | Sí (re-schedule automático)               |
 | GPU (NVIDIA)        | Sí en model servers (`deploy`) | No en el YAML de Swarm de este repo       |
 | Code interpreter    | Sí (monta `docker.sock`)       | No incluido                               |
@@ -89,17 +89,17 @@ echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.conf
 **Para Standalone:**
 
 ```bash
-mkdir -p /home/notolac/onyx-app/{postgres-data,vespa-data,opensearch-data,minio-data,file-system,nginx-templates,model-cache-hf,indexing-model-cache-hf}
-mkdir -p /home/notolac/onyx-app/logs/{api-server,background,inference-model-server,indexing-model-server}
-sudo chown -R $(id -u):$(id -g) /home/notolac/onyx-app
+mkdir -p /opt/onyx/{postgres-data,vespa-data,opensearch-data,minio-data,file-system,nginx-templates,model-cache-hf,indexing-model-cache-hf}
+mkdir -p /opt/onyx/logs/{api-server,background,inference-model-server,indexing-model-server}
+sudo chown -R $(id -u):$(id -g) /opt/onyx
 ```
 
 **Para Swarm (almacenamiento compartido):**
 
 ```bash
-sudo mkdir -p /mnt/cephfs/onyx-app/{postgres-data,vespa-data,opensearch-data,minio-data,file-system,nginx-templates,model-cache-hf,indexing-model-cache-hf}
-sudo mkdir -p /mnt/cephfs/onyx-app/logs/{api-server,background,inference-model-server,indexing-model-server}
-sudo chown -R 1000:1000 /mnt/cephfs/onyx-app
+sudo mkdir -p /opt/onyx/{postgres-data,vespa-data,opensearch-data,minio-data,file-system,nginx-templates,model-cache-hf,indexing-model-cache-hf}
+sudo mkdir -p /opt/onyx/logs/{api-server,background,inference-model-server,indexing-model-server}
+sudo chown -R 1000:1000 /opt/onyx
 ```
 
 > Si usas una ruta diferente, configura la variable `ONYX_DATA_PATH` al desplegar.
@@ -111,8 +111,8 @@ Descárgalos al directorio de datos correspondiente:
 
 ```bash
 # Ajustar la ruta según tu modo de despliegue
-cd /home/notolac/onyx-app/nginx-templates    # Standalone
-# cd /mnt/cephfs/onyx-app/nginx-templates    # Swarm
+cd /opt/onyx/nginx-templates    # Standalone
+# cd /opt/onyx/nginx-templates    # Swarm
 
 # Descargar template de configuración nginx
 # (ruta actual en upstream; la antigua deployment/docker_compose/data/nginx/ devuelve 404)
@@ -142,7 +142,7 @@ head -n 1 app.conf.template
 >
 > ```bash
 > git clone --depth 1 https://github.com/onyx-dot-app/onyx.git /tmp/onyx-repo
-> cp /tmp/onyx-repo/deployment/data/nginx/* /home/notolac/onyx-app/nginx-templates/
+> cp /tmp/onyx-repo/deployment/data/nginx/* /opt/onyx/nginx-templates/
 > rm -rf /tmp/onyx-repo
 > ```
 
@@ -319,7 +319,7 @@ Para que Onyx pueda **enviar invitaciones** (y otros correos del sistema), el ba
 
    Ese valor va en **`USER_AUTH_SECRET`** (variable de entorno del stack).
 
-2. **`WEB_DOMAIN`:** URL base con la que los usuarios abren Onyx (enlaces en los correos). Ejemplos: `http://10.0.1.10:3080`, `https://onyx.midominio.com`. Debe coincidir con cómo accedéis por navegador.
+2. **`WEB_DOMAIN`:** URL base con la que los usuarios abren Onyx (enlaces en los correos). Ejemplos: `http://localhost:3080`, `https://onyx.midominio.com`. Debe coincidir con cómo accedéis por navegador.
 
 3. **SMTP** (ejemplo genérico; usa el servidor que te dé tu proveedor: Gmail con “app password”, Microsoft 365, SendGrid SMTP, Mailgun, etc.):
 
@@ -365,7 +365,7 @@ Documentación upstream: [Basic Auth](https://docs.onyx.app/deployment/authentic
 | `ONYX_PORT`                  | `3080`                                                                 | Puerto externo de la UI                                                                                                                    |
 | `AUTH_TYPE`                  | `basic`                                                                | Tipo de autenticación (`basic`, `google_oauth`, `oidc`, `saml`, `disabled`)                                                                |
 | `POSTGRES_DB`                | `onyx_db`                                                              | Nombre de la BD                                                                                                                            |
-| `ONYX_DATA_PATH`             | `/home/notolac/onyx-app` (standalone) o `/mnt/cephfs/onyx-app` (swarm) | Ruta base de datos persistentes                                                                                                            |
+| `ONYX_DATA_PATH`             | `/opt/onyx` (standalone) o `/opt/onyx` (swarm) | Ruta base de datos persistentes                                                                                                            |
 | `OPENSEARCH_ADMIN_PASSWORD`  | `StrongPassword123!`                                                   | Password admin de OpenSearch (OpenSearch 3.x exige mayúscula, minúscula, dígito y carácter especial; **no** uses solo `openssl rand -hex`) |
 | `MINIO_ROOT_USER`            | `minioadmin`                                                           | Usuario admin de MinIO                                                                                                                     |
 | `MINIO_ROOT_PASSWORD`        | `minioadmin`                                                           | Password admin de MinIO                                                                                                                    |
@@ -489,10 +489,10 @@ docker service logs onyx_inference_model_server -f
 
 ```bash
 # Standalone
-sudo chown -R $(id -u):$(id -g) /home/notolac/onyx-app
+sudo chown -R $(id -u):$(id -g) /opt/onyx
 
 # Swarm
-sudo chown -R 1000:1000 /mnt/cephfs/onyx-app
+sudo chown -R 1000:1000 /opt/onyx
 ```
 
 #### 6. Verificar variables de entorno de un servicio
@@ -515,7 +515,7 @@ docker service inspect onyx_api_server --pretty
 docker compose -f onyx-app-standalone.yaml down
 
 # (Opcional) Eliminar datos persistentes
-rm -rf /home/notolac/onyx-app
+rm -rf /opt/onyx
 ```
 
 **Swarm:**
@@ -524,7 +524,7 @@ rm -rf /home/notolac/onyx-app
 docker stack rm onyx
 
 # (Opcional) Eliminar datos persistentes
-sudo rm -rf /mnt/cephfs/onyx-app
+sudo rm -rf /opt/onyx
 ```
 
 ---

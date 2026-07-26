@@ -1,0 +1,52 @@
+# Tdarr — AMD VAAPI transcoding (no NVIDIA runtime; uses /dev/dri)
+services:
+  tdarr:
+    container_name: tdarr
+    image: ghcr.io/haveagitgat/tdarr:latest
+    restart: unless-stopped
+    network_mode: bridge
+    ports:
+      - "8265:8265" # Web UI
+      - "8266:8266" # Server API
+    working_dir: /app/server
+    environment:
+      - TZ=Europe/Madrid
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - UMASK_SET=002
+      - serverIP=0.0.0.0
+      - serverPort=8266
+      - webUIPort=8265
+      - internalNode=true
+      - inContainer=true
+      - ffmpegVersion=7
+      - nodeName=${TDARR_NODE_NAME:-tdarr-internal}
+      - auth=false
+      - openBrowser=false
+      - maxLogSizeMB=10
+      - cronPluginUpdate=
+      # Anulan defaults NVIDIA de la imagen (linuxserver base); AMD usa solo /dev/dri
+      - NVIDIA_VISIBLE_DEVICES=
+      - NVIDIA_DRIVER_CAPABILITIES=
+      # GPU workers (VAAPI via /dev/dri — configure encoder in Tdarr UI/plugins)
+      - transcodegpuWorkers=1
+      - transcodecpuWorkers=2
+      - healthcheckgpuWorkers=1
+      - healthcheckcpuWorkers=1
+    volumes:
+      - ${TDARR_DATA_ROOT:-/opt/tdarr}/server:/app/server
+      - ${TDARR_DATA_ROOT:-/opt/tdarr}/configs:/app/configs
+      - ${TDARR_DATA_ROOT:-/opt/tdarr}/logs:/app/logs
+      - ${TDARR_MEDIA_PATH:-/data/media}:/media
+      - ${TDARR_CACHE_PATH:-/tmp/tdarr-cache}:/temp
+    devices:
+      - /dev/dri:/dev/dri
+    # GIDs del host (video=44, render=991) — el nombre "render" no existe en la imagen
+    group_add:
+      - "44"
+      - "991"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"

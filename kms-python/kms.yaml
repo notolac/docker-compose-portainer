@@ -10,5 +10,5 @@ services:
       LOGLEVEL: INFO
     restart: always
     volumes:
-      - /home/notolac/kms-python/db:/home/py-kms/db
+      - /opt/kms-python/db:/home/py-kms/db
       - /etc/localtime:/etc/localtime:ro

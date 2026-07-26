@@ -1,41 +1,45 @@
+# Nginx Proxy Manager + GoAccess
+#
+# Environment variables:
+# - NPM_DATA_ROOT        NPM data directory (default: /opt/nginx-proxy-manager)
+# - TRAEFIK_LOG_PATH     Traefik or NPM log directory for GoAccess (default: /opt/traefik/logs)
+# - TZ                   Timezone (default: UTC)
+
 services:
   app:
     image: "docker.io/jc21/nginx-proxy-manager:latest"
     container_name: nginx-proxy
     restart: always
     ports:
-      - 8080:80
-      - 8181:81
-      - 443:443
+      - ${NPM_HTTP_PORT:-8080}:80
+      - ${NPM_ADMIN_PORT:-8181}:81
+      - ${NPM_HTTPS_PORT:-443}:443
     volumes:
       - data:/data
       - letsencrypt:/etc/letsencrypt
-      - /home/notolac/nginx-proxy-manager/_hsts.conf:/app/templates/_hsts.conf:ro
+      - ${NPM_DATA_ROOT:-/opt/nginx-proxy-manager}/_hsts.conf:/app/templates/_hsts.conf:ro
 
   goaccess:
     image: "xavierh/goaccess-for-nginxproxymanager:latest"
     container_name: goaccess
     restart: always
     ports:
-      - "7880:7880"
+      - "${GOACCESS_PORT:-7880}:7880"
     environment:
-      - TZ=Europe/Madrid
-      - SKIP_ARCHIVED_LOGS=False #optional
-      - DEBUG=False #optional
-      - BASIC_AUTH=False #optional
-      - BASIC_AUTH_USERNAME= #optional
-      - BASIC_AUTH_PASSWORD= #optional
-      - EXCLUDE_IPS=127.0.0.1 #optional - comma delimited
-      - LOG_TYPE=TRAEFIK #optional - NPM or CUSTOM
-      - ENABLE_BROWSERS_LIST=True #optional - more information below
-      - CUSTOM_BROWSERS=Kuma:Uptime,TestBrowser:Crawler #optional - comma delimited, more information below
-      - HTML_REFRESH=5 #optional - Refresh the HTML report every X seconds. https://goaccess.io/man
-      - KEEP_LAST=90 #optional - Keep the last specified number of days in storage. https://goaccess.io/man
-      - PROCESSING_THREADS=1 # optional - number of concurrent processing threads; default 1
+      - TZ=${TZ:-UTC}
+      - SKIP_ARCHIVED_LOGS=False
+      - DEBUG=False
+      - BASIC_AUTH=False
+      - BASIC_AUTH_USERNAME=
+      - BASIC_AUTH_PASSWORD=
+      - EXCLUDE_IPS=127.0.0.1
+      - LOG_TYPE=${LOG_TYPE:-NPM}
+      - ENABLE_BROWSERS_LIST=True
+      - HTML_REFRESH=5
+      - KEEP_LAST=90
+      - PROCESSING_THREADS=1
     volumes:
-      - /home/notolac/traefik-stack/traefik/logs:/opt/log:ro #required - path to your Nginx Proxy Manager logs
-      #- /home/notolac/nginx-proxy-manager/data/logs:/opt/log:ro #required - path to your Nginx Proxy Manager logs
-      #- /home/notolac/traefik-stack/traefik/logs:/opt/custom #optional, required if using log_type = CUSTOM #change to the location of your choice
+      - ${TRAEFIK_LOG_PATH:-/opt/nginx-proxy-manager/data/logs}:/opt/log:ro
 
 volumes:
   data:
@@ -43,10 +47,10 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /home/notolac/nginx-proxy-manager/data
+      device: ${NPM_DATA_ROOT:-/opt/nginx-proxy-manager}/data
   letsencrypt:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /home/notolac/nginx-proxy-manager/letsencrypt
+      device: ${NPM_DATA_ROOT:-/opt/nginx-proxy-manager}/letsencrypt

@@ -10,7 +10,7 @@ services:
         limits:
           memory: 1000M
     volumes:
-      - ${MEALIE_DATA_DIR:-/home/notolac/mealie}:/app/data
+      - ${MEALIE_DATA_DIR:-/opt/mealie}:/app/data
     environment:
       # Permisos y zona horaria
       PUID: "${MEALIE_PUID:-1000}"

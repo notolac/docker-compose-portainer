@@ -1,22 +1,11 @@
 #!/bin/sh
 
-# Bucle infinito para ejecutar la sincronización cada 24 horas
+RCLONE_REMOTE="${RCLONE_REMOTE:-gdrive}"
+
+# Sync every 24 hours
 while true; do
-  
-  # Sincronizar la carpeta local /storage_hdd/multimedia con Google Drive
-  # Esto sube cualquier cambio desde el almacenamiento local a la nube
-  rclone -vv sync /data/multimedia chiguire-bot-gdrive:/multimedia
-  
-  # Sincronizar la carpeta local /media/Plex con Google Drive
-  # Se asegura de que la versión en Google Drive sea un reflejo exacto de la local
-  rclone -vv sync /data/Plex chiguire-bot-gdrive:/Plex
-
-  # Sincronizar la carpeta local /data/proxmox con Google Drive
-  # Se asegura de que la versión en Google Drive sea un reflejo exacto de la local
-  rclone -vv sync /data/proxmox chiguire-bot-gdrive:/proxmox
-  
-  # Esperar 24 horas antes de volver a ejecutar la sincronización
-  # 86400 segundos = 24 horas
+  rclone -vv sync /data/multimedia "${RCLONE_REMOTE}:/multimedia"
+  rclone -vv sync /data/Plex "${RCLONE_REMOTE}:/Plex"
+  rclone -vv sync /data/proxmox "${RCLONE_REMOTE}:/proxmox"
   sleep 86400
-
 done

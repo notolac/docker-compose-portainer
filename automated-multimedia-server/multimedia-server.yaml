@@ -1,5 +1,19 @@
 ---
-# Configuración global para valores por defecto
+# Media automation stack (*arr + qBittorrent over Gluetun VPN)
+#
+# Environment variables (set in Portainer or .env — no quotes):
+# - WIREGUARD_PRIVATE_KEY       ProtonVPN WireGuard private key
+# - MEDIA_CONFIG_ROOT           App config root (default: /opt/media-services)
+# - DOWNLOADS_PATH              Torrent download directory (default: /data/downloads)
+# - MOVIES_PATH                 Movie library (default: /data/media/movies)
+# - TV_PATH                     TV library (default: /data/media/tv)
+# - MUSIC_PATH                  Music library (default: /data/media/music)
+# - TZ                          Timezone (default: UTC)
+#
+# Example:
+#   mkdir -p /opt/media-services/{gluetun,qbittorrent,prowlarr,radarr,sonarr,lidarr}
+#   mkdir -p /data/downloads /data/media/{movies,tv,music}
+
 x-defaults: &defaults
   restart: unless-stopped
 
@@ -23,15 +37,15 @@ services:
       - 8686:8686 # Lidarr
       - 8787:8787 # Readarr
     volumes:
-      - /home/notolac/media-services/gluetun:/gluetun
+      - ${MEDIA_CONFIG_ROOT:-/opt/media-services}/gluetun:/gluetun
     environment:
       - VPN_SERVICE_PROVIDER=protonvpn
       - VPN_PORT_FORWARDING_PROVIDER=protonvpn
       - VPN_TYPE=wireguard
       - PORT_FORWARD_ONLY=on
-      - WIREGUARD_PRIVATE_KEY=$WIREGUARD_PRIVATE_KEY
-      - SERVER_COUNTRIES=Netherlands, Spain, Germany
-      - TZ=Europe/Madrid
+      - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY}
+      - SERVER_COUNTRIES=${VPN_SERVER_COUNTRIES:-Netherlands,Spain,Germany}
+      - TZ=${TZ:-UTC}
       - UPDATER_PERIOD=24h
 
 
@@ -42,12 +56,12 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/Madrid
+      - TZ=${TZ:-UTC}
       - WEBUI_PORT=8097
       - TORRENTING_PORT=6881
     volumes:
-      - /home/notolac/media-services/qbittorrent:/config
-      - /storage_hdd/qbittorrent:/downloads
+      - ${MEDIA_CONFIG_ROOT:-/opt/media-services}/qbittorrent:/config
+      - ${DOWNLOADS_PATH:-/data/downloads}:/downloads
     depends_on:
       - gluetun
     network_mode: "service:gluetun"
@@ -65,9 +79,9 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/Madrid
+      - TZ=${TZ:-UTC}
     volumes:
-      - /home/notolac/media-services/prowlarr:/config
+      - ${MEDIA_CONFIG_ROOT:-/opt/media-services}/prowlarr:/config
     depends_on:
       - gluetun
     network_mode: "service:gluetun"
@@ -84,13 +98,13 @@ services:
     <<: *defaults
     environment:
       - UMASK_SET=022
-      - TZ=Europe/Madrid
+      - TZ=${TZ:-UTC}
       - PUID=1000
       - PGID=1000
     volumes:
-      - /srv/Plex/Peliculas:/movies
-      - /storage_hdd/qbittorrent:/downloads
-      - /home/notolac/media-services/radarr:/config
+      - ${MOVIES_PATH:-/data/media/movies}:/movies
+      - ${DOWNLOADS_PATH:-/data/downloads}:/downloads
+      - ${MEDIA_CONFIG_ROOT:-/opt/media-services}/radarr:/config
     depends_on:
       - gluetun
     network_mode: "service:gluetun"
@@ -108,11 +122,11 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/Madrid
+      - TZ=${TZ:-UTC}
     volumes:
-      - /home/notolac/media-services/sonarr:/config
-      - /srv/Plex/Series:/tv
-      - /storage_hdd/qbittorrent:/downloads
+      - ${MEDIA_CONFIG_ROOT:-/opt/media-services}/sonarr:/config
+      - ${TV_PATH:-/data/media/tv}:/tv
+      - ${DOWNLOADS_PATH:-/data/downloads}:/downloads
     depends_on:
       - gluetun
     network_mode: "service:gluetun"
@@ -130,11 +144,11 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/Madrid
+      - TZ=${TZ:-UTC}
     volumes:
-      - /home/notolac/media-services/lidarr:/config
-      - /srv/Plex/Music:/music
-      - /storage_hdd/qbittorrent:/downloads
+      - ${MEDIA_CONFIG_ROOT:-/opt/media-services}/lidarr:/config
+      - ${MUSIC_PATH:-/data/media/music}:/music
+      - ${DOWNLOADS_PATH:-/data/downloads}:/downloads
     depends_on:
       - gluetun
     network_mode: "service:gluetun"

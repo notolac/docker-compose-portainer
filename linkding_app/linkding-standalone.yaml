@@ -6,13 +6,13 @@
 #   Ex: "linkding_app"
 #
 # - LINKDING_IP                 Host IP where linkding runs
-#   Ex: "192.168.1.110"
+#   Ex: "192.168.1.100"
 #
 # - LINKDING_PORT               Host port that will expose linkding
 #   Ex: "9090"
 #
 # - LINKDING_DATA_PATH          Host path for persistent data
-#   Ex: "/home/notolac/linkding"
+#   Ex: "/opt/linkding"
 #
 # - LINKDING_CONTEXT_PATH       Subpath if you serve linkding under a path
 #   Ex: ""  (recommended, root)

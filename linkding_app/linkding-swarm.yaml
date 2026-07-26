@@ -9,7 +9,7 @@
 #   Ex: "9090"
 #
 # - LINKDING_DATA_PATH          Host path for persistent data
-#   Ex: "/mnt/cephfs/linkding" (default in Swarm)
+#   Ex: "/opt/linkding" (default in Swarm)
 #
 # - LINKDING_CONTEXT_PATH       Subpath if you serve linkding under a path
 #   Ex: ""  (recommended, root)
@@ -140,4 +140,4 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${LINKDING_DATA_PATH:-/mnt/cephfs/linkding}
+      device: ${LINKDING_DATA_PATH:-/opt/linkding}

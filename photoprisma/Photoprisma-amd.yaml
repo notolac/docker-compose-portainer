@@ -22,7 +22,7 @@
 # - MARIADB_PASSWORD
 # - MARIADB_ROOT_PASSWORD
 # ============================
-# PhotoPrism — AMD VAAPI (RX 7800XT) on srv-media-docker
+# PhotoPrism — AMD VAAPI (uses /dev/dri, no NVIDIA runtime)
 # Sin NVIDIA Container Toolkit. Ver ../photoprisma.md
 # ============================
 

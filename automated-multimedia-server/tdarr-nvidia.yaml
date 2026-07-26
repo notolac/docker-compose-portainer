@@ -1,0 +1,47 @@
+# Tdarr — NVIDIA GPU transcoding
+#
+# Requires: nvidia-container-toolkit
+# Environment variables: see tdarr-amd.yaml (TDARR_DATA_ROOT, TDARR_MEDIA_PATH, TDARR_CACHE_PATH, TDARR_NODE_NAME)
+
+services:
+  tdarr:
+    container_name: tdarr
+    image: ghcr.io/haveagitgat/tdarr:latest
+    restart: unless-stopped
+    network_mode: bridge
+    ports:
+      - "8265:8265"
+      - "8266:8266"
+    working_dir: /app/server
+    environment:
+      - TZ=${TZ:-UTC}
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - UMASK_SET=002
+      - serverIP=0.0.0.0
+      - serverPort=8266
+      - webUIPort=8265
+      - internalNode=true
+      - inContainer=true
+      - ffmpegVersion=7
+      - nodeName=${TDARR_NODE_NAME:-tdarr-nvidia}
+      - auth=false
+      - openBrowser=false
+      - maxLogSizeMB=10
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      - ${TDARR_DATA_ROOT:-/opt/tdarr}/server:/app/server
+      - ${TDARR_DATA_ROOT:-/opt/tdarr}/configs:/app/configs
+      - ${TDARR_DATA_ROOT:-/opt/tdarr}/logs:/app/logs
+      - ${TDARR_MEDIA_PATH:-/data/media}:/media
+      - ${TDARR_CACHE_PATH:-/tmp/tdarr-cache}:/temp
+    devices:
+      - /dev/dri:/dev/dri
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

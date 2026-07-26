@@ -40,4 +40,4 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${HOMARR_DATA_PATH:-/mnt/cephfs/homarr/data}
+      device: ${HOMARR_DATA_PATH:-/opt/homarr/data}

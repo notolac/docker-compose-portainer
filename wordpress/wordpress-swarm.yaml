@@ -72,10 +72,10 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${WORDPRESS_DATA_PATH:-/mnt/cephfs/wordpress}
+      device: ${WORDPRESS_DATA_PATH:-/opt/wordpress}
   mysql-data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${MYSQL_DATA_PATH:-/mnt/cephfs/wordpress_db}
+      device: ${MYSQL_DATA_PATH:-/opt/wordpress_db}

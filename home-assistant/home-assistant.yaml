@@ -1,9 +1,14 @@
+# Home Assistant
+#
+# Environment variables:
+# - HA_CONFIG_PATH   Config directory (default: /opt/home-assistant)
+
 services:
   homeassistant:
     container_name: homeassistant
     image: "ghcr.io/home-assistant/home-assistant:stable"
     volumes:
-      - /home/notolac/home-assistant:/config
+      - ${HA_CONFIG_PATH:-/opt/home-assistant}:/config
       - /etc/localtime:/etc/localtime:ro
       - /run/dbus:/run/dbus:ro
     restart: unless-stopped

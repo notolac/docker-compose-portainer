@@ -65,5 +65,5 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${VAULTWARDEN_DATA_PATH:-/mnt/cephfs/vaultwarden}
+      device: ${VAULTWARDEN_DATA_PATH:-/opt/vaultwarden}
 

@@ -28,13 +28,13 @@
 # - IMPORTER_MAIL_USERNAME: SMTP username for importer
 # - IMPORTER_MAIL_PASSWORD: SMTP password for importer
 # - IMPORTER_MAIL_ENCRYPTION: SMTP encryption for importer
-# - FIREFLY_UPLOAD_PATH: Local path for Firefly III uploads (default: /home/notolac/fireflyiii/upload)
-# - FIREFLY_DB_PATH: Local path for PostgreSQL data (default: /home/notolac/fireflyiii/db)
+# - FIREFLY_UPLOAD_PATH: Local path for Firefly III uploads (default: /opt/fireflyiii/upload)
+# - FIREFLY_DB_PATH: Local path for PostgreSQL data (default: /opt/fireflyiii/db)
 #
 # IMPORTANT: Ensure the directories exist and have correct permissions:
-# mkdir -p /home/notolac/fireflyiii/upload /home/notolac/fireflyiii/db
-# chown -R 1000:1000 /home/notolac/fireflyiii/upload  # UID 1000 for Firefly III
-# chown -R 999:999 /home/notolac/fireflyiii/db        # UID 999 for PostgreSQL
+# mkdir -p /opt/fireflyiii/upload /opt/fireflyiii/db
+# chown -R 1000:1000 /opt/fireflyiii/upload  # UID 1000 for Firefly III
+# chown -R 999:999 /opt/fireflyiii/db        # UID 999 for PostgreSQL
 services:
   app:
     image: fireflyiii/core:latest
@@ -44,7 +44,7 @@ services:
       - firefly_iii
     restart: always
     volumes:
-      - ${FIREFLY_UPLOAD_PATH:-/home/notolac/fireflyiii/upload}:/var/www/html/storage/upload
+      - ${FIREFLY_UPLOAD_PATH:-/opt/fireflyiii/upload}:/var/www/html/storage/upload
     environment:
       # Application Environment
       - APP_ENV=local
@@ -400,7 +400,7 @@ services:
       - POSTGRES_USER=$POSTGRES_USER
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
-      - ${FIREFLY_DB_PATH:-/home/notolac/fireflyiii/db}:/var/lib/postgresql/data
+      - ${FIREFLY_DB_PATH:-/opt/fireflyiii/db}:/var/lib/postgresql/data
 
   importer:
     image: fireflyiii/data-importer:latest

@@ -13,8 +13,8 @@
 # DEPLOYMENT STEPS:
 # ===========================================
 # 1. Create required directories on Swarm manager node:
-#    sudo mkdir -p /mnt/cephfs/proxy-gpt/{litellm-db,open-webui-data}
-#    sudo chown -R 1000:1000 /mnt/cephfs/proxy-gpt
+#    sudo mkdir -p /opt/proxy-gpt/{litellm-db,open-webui-data}
+#    sudo chown -R 1000:1000 /opt/proxy-gpt
 # 2. Generate secure keys (see STEP 1 below)
 # 3. Configure environment variables in Portainer Swarm stack
 # 4. Deploy the stack
@@ -51,7 +51,7 @@
 # ⚠️  IMPORTANT: In Portainer, DO NOT use quotes around variable values!
 # ⚠️  Example: DATABASE_URL=postgresql://... (WITHOUT quotes)
 #
-# - OLLAMA_BASE_URL: URL of your Ollama server (e.g., http://10.0.1.11:11434)
+# - OLLAMA_BASE_URL: URL of your Ollama server (e.g., http://ollama-host:11434)
 # - DATABASE_URL: Complete PostgreSQL connection string
 #   Format: postgresql://USER:PASSWORD@db:5432/DATABASE_NAME
 #   Example: postgresql://llmproxy:your_secure_password@db:5432/litellm
@@ -62,8 +62,8 @@
 # - POSTGRES_PASSWORD: PostgreSQL password (REQUIRED)
 #
 # Optional variables (with defaults):
-# - LITELLM_DATA_PATH: Path for PostgreSQL data (default: /mnt/cephfs/proxy-gpt/litellm-db)
-# - OPENWEBUI_DATA_PATH: Path for Open WebUI data (default: /mnt/cephfs/proxy-gpt/open-webui-data)
+# - LITELLM_DATA_PATH: Path for PostgreSQL data (default: /opt/proxy-gpt/litellm-db)
+# - OPENWEBUI_DATA_PATH: Path for Open WebUI data (default: /opt/proxy-gpt/open-webui-data)
 #
 # ===========================================
 # STEP 1: Generate Secure Keys and Configure Variables (REQUIRED)
@@ -109,7 +109,7 @@
 #    
 #    Name                 | Value
 #    ---------------------|-----------------------------------------------
-#    OLLAMA_BASE_URL      | http://10.0.1.11:11434
+#    OLLAMA_BASE_URL      | http://ollama-host:11434
 #    DATABASE_URL         | postgresql://llmproxy:password@db:5432/litellm
 #    POSTGRES_DB          | litellm
 #    POSTGRES_USER        | llmproxy
@@ -145,8 +145,8 @@
 #   * Verify endpoint is responding: curl http://localhost:4000/health/liveliness
 #
 # 3. Volume permission issues:
-#   * Ensure directories exist: /mnt/cephfs/proxy-gpt/litellm-db and /mnt/cephfs/proxy-gpt/open-webui-data
-#   * Check permissions: sudo chown -R 1000:1000 /mnt/cephfs/proxy-gpt
+#   * Ensure directories exist: /opt/proxy-gpt/litellm-db and /opt/proxy-gpt/open-webui-data
+#   * Check permissions: sudo chown -R 1000:1000 /opt/proxy-gpt
 #
 # 4. All services use 'node.role == manager' constraint for co-location
 # 5. Verify environment variables: docker service inspect proxygpt_litellm --pretty
@@ -247,13 +247,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${OPENWEBUI_DATA_PATH:-/mnt/cephfs/proxy-gpt/open-webui-data}
+      device: ${OPENWEBUI_DATA_PATH:-/opt/proxy-gpt/open-webui-data}
   litellm-db:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${LITELLM_DATA_PATH:-/mnt/cephfs/proxy-gpt/litellm-db}
+      device: ${LITELLM_DATA_PATH:-/opt/proxy-gpt/litellm-db}
 
 networks:
   proxygpt:
@@ -295,8 +295,8 @@ networks:
 #
 # OPTIONAL VARIABLES (uncomment if needed):
 # -----------------------------------------
-# LITELLM_DATA_PATH=/mnt/cephfs/proxy-gpt/litellm-db
-# OPENWEBUI_DATA_PATH=/mnt/cephfs/proxy-gpt/open-webui-data
+# LITELLM_DATA_PATH=/opt/proxy-gpt/litellm-db
+# OPENWEBUI_DATA_PATH=/opt/proxy-gpt/open-webui-data
 #
 # IMPORTANT NOTES:
 # ----------------

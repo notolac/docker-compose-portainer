@@ -111,9 +111,9 @@ services:
       - 8181:81
       - 443:443
     volumes:
-      - /home/notolac/nginx-proxy-manager/data:/data
-      - /home/notolac/nginx-proxy-manager/letsencrypt:/etc/letsencrypt
-      - /home/notolac/nginx-proxy-manager/_hsts.conf:/app/templates/_hsts.conf:ro
+      - /opt/nginx-proxy-manager/data:/data
+      - /opt/nginx-proxy-manager/letsencrypt:/etc/letsencrypt
+      - /opt/nginx-proxy-manager/_hsts.conf:/app/templates/_hsts.conf:ro
 
   goaccess:
     image: "xavierh/goaccess-for-nginxproxymanager:latest"
@@ -136,7 +136,7 @@ services:
       - KEEP_LAST=90 #optional - Keep the last specified number of days in storage. https://goaccess.io/man
       - PROCESSING_THREADS=1 #optional - This parameter sets the number of concurrent processing threads in the program's execution, affecting log data analysis, typically adjusted based on CPU cores. Default is 1. https://goaccess.io/man
     volumes:
-      - /home/notolac/nginx-proxy-manager/data/logs:/opt/log:ro #required - path to your Nginx Proxy Manager logs
+      - /opt/nginx-proxy-manager/data/logs:/opt/log:ro #required - path to your Nginx Proxy Manager logs
       #- /path/to/host/custom:/opt/custom #optional, required if using log_type = CUSTOM #change to the location of your choice
 ```
 

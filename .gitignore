@@ -287,6 +287,12 @@ $RECYCLE.BIN/
 # Python virtual environment
 .venv/
 
+# Local environment files (never commit secrets)
+.env
+.env.local
+!.env.example
+!.env.template
+
 # End of https://www.toptal.com/developers/gitignore/api/go,vim,pycharm,terraform,visualstudiocode,macos,windows
 
 !requirements.txt

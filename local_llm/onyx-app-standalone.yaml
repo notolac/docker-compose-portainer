@@ -26,12 +26,12 @@
 #      echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.conf
 #
 # 2. Create data directories:
-#      mkdir -p /home/notolac/onyx-app/{postgres-data,vespa-data,opensearch-data,minio-data,file-system,nginx-templates,model-cache-hf,indexing-model-cache-hf}
-#      mkdir -p /home/notolac/onyx-app/logs/{api-server,background,inference-model-server,indexing-model-server}
-#      sudo chown -R $(id -u):$(id -g) /home/notolac/onyx-app
+#      mkdir -p /opt/onyx/{postgres-data,vespa-data,opensearch-data,minio-data,file-system,nginx-templates,model-cache-hf,indexing-model-cache-hf}
+#      mkdir -p /opt/onyx/logs/{api-server,background,inference-model-server,indexing-model-server}
+#      sudo chown -R $(id -u):$(id -g) /opt/onyx
 #
 # 3. Download Onyx nginx config files:
-#      cd /home/notolac/onyx-app/nginx-templates
+#      cd /opt/onyx/nginx-templates
 #      curl -LO https://raw.githubusercontent.com/onyx-dot-app/onyx/main/deployment/data/nginx/app.conf.template
 #      curl -LO https://raw.githubusercontent.com/onyx-dot-app/onyx/main/deployment/data/nginx/run-nginx.sh
 #      chmod +x run-nginx.sh
@@ -66,7 +66,7 @@
 # - AUTH_TYPE:                 Authentication type (default: basic)
 # - POSTGRES_DB:               Database name (default: onyx_db)
 # - OPENSEARCH_ADMIN_PASSWORD: OpenSearch password (default: StrongPassword123!)
-# - ONYX_DATA_PATH:            Base path for data (default: /home/notolac/onyx-app)
+# - ONYX_DATA_PATH:            Base path for data (default: /opt/onyx)
 #
 # See README-onyx-swarm.md for the complete variable reference.
 #
@@ -138,8 +138,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ${ONYX_DATA_PATH:-/home/notolac/onyx-app}/logs/api-server:/var/log/onyx
-      - ${ONYX_DATA_PATH:-/home/notolac/onyx-app}/file-system:/app/file-system
+      - ${ONYX_DATA_PATH:-/opt/onyx}/logs/api-server:/var/log/onyx
+      - ${ONYX_DATA_PATH:-/opt/onyx}/file-system:/app/file-system
     healthcheck:
       test:
         [
@@ -213,8 +213,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ${ONYX_DATA_PATH:-/home/notolac/onyx-app}/logs/background:/var/log/onyx
-      - ${ONYX_DATA_PATH:-/home/notolac/onyx-app}/file-system:/app/file-system
+      - ${ONYX_DATA_PATH:-/opt/onyx}/logs/background:/var/log/onyx
+      - ${ONYX_DATA_PATH:-/opt/onyx}/file-system:/app/file-system
     logging:
       driver: json-file
       options:
@@ -258,8 +258,8 @@ services:
         exec uvicorn model_server.main:app --host 0.0.0.0 --port 9000;
       fi"
     volumes:
-      - ${ONYX_DATA_PATH:-/home/notolac/onyx-app}/model-cache-hf:/app/.cache/huggingface/
-      - ${ONYX_DATA_PATH:-/home/notolac/onyx-app}/logs/inference-model-server:/var/log/onyx
+      - ${ONYX_DATA_PATH:-/opt/onyx}/model-cache-hf:/app/.cache/huggingface/
+      - ${ONYX_DATA_PATH:-/opt/onyx}/logs/inference-model-server:/var/log/onyx
     healthcheck:
       test:
         [
@@ -301,8 +301,8 @@ services:
     environment:
       - INDEXING_ONLY=True
     volumes:
-      - ${ONYX_DATA_PATH:-/home/notolac/onyx-app}/indexing-model-cache-hf:/app/.cache/huggingface/
-      - ${ONYX_DATA_PATH:-/home/notolac/onyx-app}/logs/indexing-model-server:/var/log/onyx
+      - ${ONYX_DATA_PATH:-/opt/onyx}/indexing-model-cache-hf:/app/.cache/huggingface/
+      - ${ONYX_DATA_PATH:-/opt/onyx}/logs/indexing-model-server:/var/log/onyx
     healthcheck:
       test:
         [
@@ -334,7 +334,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
       - POSTGRES_DB=${POSTGRES_DB:-onyx_db}
     volumes:
-      - ${ONYX_DATA_PATH:-/home/notolac/onyx-app}/postgres-data:/var/lib/postgresql/data
+      - ${ONYX_DATA_PATH:-/opt/onyx}/postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
@@ -351,7 +351,7 @@ services:
     environment:
       - VESPA_SKIP_UPGRADE_CHECK=${VESPA_SKIP_UPGRADE_CHECK:-true}
     volumes:
-      - ${ONYX_DATA_PATH:-/home/notolac/onyx-app}/vespa-data:/opt/vespa/var
+      - ${ONYX_DATA_PATH:-/opt/onyx}/vespa-data:/opt/vespa/var
     logging:
       driver: json-file
       options:
@@ -377,7 +377,7 @@ services:
         soft: 65536
         hard: 65536
     volumes:
-      - ${ONYX_DATA_PATH:-/home/notolac/onyx-app}/opensearch-data:/usr/share/opensearch/data
+      - ${ONYX_DATA_PATH:-/opt/onyx}/opensearch-data:/usr/share/opensearch/data
     logging:
       driver: json-file
       options:
@@ -401,7 +401,7 @@ services:
     ports:
       - "${ONYX_PORT:-3080}:80"
     volumes:
-      - ${ONYX_DATA_PATH:-/home/notolac/onyx-app}/nginx-templates:/nginx-templates:ro
+      - ${ONYX_DATA_PATH:-/opt/onyx}/nginx-templates:/nginx-templates:ro
     command: >
       /bin/sh -c "rm -f /etc/nginx/conf.d/default.conf
       && cp -a /nginx-templates/. /etc/nginx/conf.d/
@@ -436,7 +436,7 @@ services:
       MINIO_DEFAULT_BUCKETS: ${S3_FILE_STORE_BUCKET_NAME:-onyx-file-store-bucket}
     command: server /data --console-address ":9001"
     volumes:
-      - ${ONYX_DATA_PATH:-/home/notolac/onyx-app}/minio-data:/data
+      - ${ONYX_DATA_PATH:-/opt/onyx}/minio-data:/data
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 30s
@@ -481,13 +481,13 @@ networks:
 # AUTH_TYPE=basic
 # POSTGRES_DB=onyx_db
 # OPENSEARCH_ADMIN_PASSWORD=StrongPassword123!
-# ONYX_DATA_PATH=/home/notolac/onyx-app
+# ONYX_DATA_PATH=/opt/onyx
 # MINIO_ROOT_USER=minioadmin
 # MINIO_ROOT_PASSWORD=minioadmin
 # CODE_INTERPRETER_BASE_URL=http://code-interpreter:8000
 # CODE_INTERPRETER_IMAGE_TAG=latest
 # DOCKER_SOCK_PATH=/var/run/docker.sock
-# WEB_DOMAIN=http://10.0.1.10:3080
+# WEB_DOMAIN=http://localhost:3080
 # USER_AUTH_SECRET=<openssl rand -hex 32>
 # SMTP_SERVER=smtp.gmail.com
 # SMTP_PORT=587
@@ -508,7 +508,7 @@ networks:
 # AUTH_TYPE=basic
 # POSTGRES_DB=onyx_db
 # IMAGE_TAG=latest
-# ONYX_DATA_PATH=/home/notolac/onyx-app
+# ONYX_DATA_PATH=/opt/onyx
 #
 # Place this .env file in the same directory as onyx-app-standalone.yaml
 # Then deploy with: docker compose -f onyx-app-standalone.yaml up -d

@@ -1,29 +1,34 @@
+# Ghost blog CMS
+#
+# Environment variables:
+# - HOST_PORT                        Host port (default: 8080)
+# - GHOST_DATA_ROOT                  Data root (default: /opt/ghost)
+# - url                              Public URL (e.g. https://blog.example.com)
+# - database__connection__password   MySQL password for Ghost user
+# - MYSQL_ROOT_PASSWORD              MySQL root password
+
 services:
   ghost:
     image: ghost:5-alpine
     restart: always
     ports:
-      - $HOST_PORT:2368
+      - ${HOST_PORT:-8080}:2368
     environment:
-      # see https://ghost.org/docs/config/#configuration-options
       database__client: mysql
       database__connection__host: db
       database__connection__user: root
-      database__connection__password: $database__connection__password
+      database__connection__password: ${database__connection__password}
       database__connection__database: ghost
-      # this url value is just an example, and is likely wrong for your environment!  http://localhost:8080
-      url: $url
-      # contrary to the default mentioned in the linked documentation, this image defaults to NODE_ENV=production (so development mode needs to be explicitly specified if desired)
-      #NODE_ENV: development
+      url: ${url:-http://localhost:8080}
     volumes:
       - ghost-web-data:/var/lib/ghost/content
-      - /home/notolac/ghost/ghost-config/config.production.json:/var/lib/ghost/config.production.json
+      - ${GHOST_DATA_ROOT:-/opt/ghost}/ghost-config/config.production.json:/var/lib/ghost/config.production.json
 
   db:
     image: mysql:8.0
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     volumes:
       - ghost-db-data:/var/lib/mysql
 
@@ -33,10 +38,10 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /home/notolac/ghost/ghost-web-data
+      device: ${GHOST_DATA_ROOT:-/opt/ghost}/ghost-web-data
   ghost-db-data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /home/notolac/ghost/ghost-db-data
+      device: ${GHOST_DATA_ROOT:-/opt/ghost}/ghost-db-data
