@@ -65,7 +65,7 @@ Index of all deployable stacks in this repository. Each folder contains one or m
 |---------|--------|----------|-------|
 | Nginx Proxy Manager + GoAccess | [nginx-proxy-manager-goaccess/](nginx-proxy-manager-goaccess/) | standalone | Reverse proxy + log analytics |
 | Node monitor (Prometheus + Grafana) | [node-monitor-grafana/](node-monitor-grafana/) | standalone | Basic metrics |
-| rclone sync | [rclone/](rclone/) | standalone | Cloud backup — see [README](rclone/README.md) |
+| rclone sync | [rclone/](rclone/) | standalone | Cloud backup via Portainer env (`RCLONE_*` / path vars) — see [README](rclone/README.md) |
 
 ## Choosing standalone vs Swarm
 

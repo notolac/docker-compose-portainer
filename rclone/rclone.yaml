@@ -1,14 +1,30 @@
 # rclone — scheduled cloud sync (backup / restore)
 #
 # Environment variables:
-# - RCLONE_CONFIG_PATH   Host path to rclone.conf (default: /opt/rclone/config/rclone.conf)
-# - RCLONE_SCRIPT        backup or restore (default: backup)
-# - MULTIMEDIA_PATH      Local multimedia data (default: /data/multimedia)
-# - PLEX_PATH            Local Plex library (default: /data/plex)
-# - PROXMOX_PATH         Optional Proxmox backup path (default: /data/proxmox)
+# - RCLONE_CONFIG_PATH     Host path to rclone.conf (default: /opt/rclone/config/rclone.conf)
+# - RCLONE_BACKUP_SCRIPT   Host path to backup entrypoint (default: ./rclone_entrypoint_backup.sh)
+# - RCLONE_RESTORE_SCRIPT  Host path to restore entrypoint (default: ./rclone_entrypoint_restore.sh)
+# - RCLONE_SCRIPT          backup or restore (default: backup)
+# - RCLONE_REMOTE          rclone remote name (default: gdrive)
+# - MULTIMEDIA_PATH        Local multimedia data (default: /data/multimedia)
+# - PLEX_PATH              Local Plex library (default: /data/plex)
+# - PROXMOX_PATH           Optional Proxmox backup path (default: /data/proxmox)
+#
+# Homelab .11 example env:
+#   RCLONE_CONFIG_PATH=/home/notolac/.config/rclone/rclone.conf
+#   RCLONE_BACKUP_SCRIPT=/home/notolac/scripts/rclone_entrypoint_backup.sh
+#   RCLONE_RESTORE_SCRIPT=/home/notolac/scripts/rclone_entrypoint_restore.sh
+#   MULTIMEDIA_PATH=/srv/multimedia
+#   PLEX_PATH=/srv/Plex
+#   RCLONE_SCRIPT=backup
+#   RCLONE_REMOTE=chiguire-bot-gdrive
 #
 # Generate rclone.conf:
 #   docker run -it -v /opt/rclone/config:/config/rclone rclone/rclone:latest config
+#
+# Note: if a bind source path is missing, Docker creates a directory there and
+# `/backup.sh` then fails with "Permission denied". Use absolute script paths
+# in Portainer, or ensure relative files exist before the first deploy.
 
 services:
   rclone_sync:
@@ -16,12 +32,13 @@ services:
     container_name: rclone_sync
     volumes:
       - ${RCLONE_CONFIG_PATH:-/opt/rclone/config/rclone.conf}:/config/rclone/rclone.conf:ro
-      - ./rclone_entrypoint_backup.sh:/backup.sh:ro
-      - ./rclone_entrypoint_restore.sh:/restore.sh:ro
+      - ${RCLONE_BACKUP_SCRIPT:-./rclone_entrypoint_backup.sh}:/backup.sh:ro
+      - ${RCLONE_RESTORE_SCRIPT:-./rclone_entrypoint_restore.sh}:/restore.sh:ro
       - ${MULTIMEDIA_PATH:-/data/multimedia}:/data/multimedia
       - ${PLEX_PATH:-/data/plex}:/data/Plex
       - ${PROXMOX_PATH:-/data/proxmox}:/data/proxmox
-    entrypoint: ["/bin/sh", "-c", "/${RCLONE_SCRIPT:-backup}.sh"]
+    # Invoke via sh so the script does not need +x inside the image mount.
+    entrypoint: ["/bin/sh", "/${RCLONE_SCRIPT:-backup}.sh"]
     environment:
       - RCLONE_CONFIG=/config/rclone/rclone.conf
       - RCLONE_REMOTE=${RCLONE_REMOTE:-gdrive}
