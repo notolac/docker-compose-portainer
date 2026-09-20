@@ -1,4 +1,14 @@
 ---
+# Semaphore UI + MCP — ansible automation (LAN).
+#
+# Environment variables:
+# - HOST_PORT, MCP_PORT, SEMAPHORE_URL
+# - MYSQL_PASSWORD, SEMAPHORE_DB_PASS, SEMAPHORE_ADMIN, SEMAPHORE_ADMIN_EMAIL,
+#   SEMAPHORE_ADMIN_PASSWORD, SEMAPHORE_ACCESS_KEY_ENCRYPTION, SEMAPHORE_API_TOKEN
+# - SEMAPHORE_SSH_RUNNER_PATH  Host dir with the SSH key for runner jobs
+#   (default: /home/notolac/.ssh/semaphore_runner). Must exist on the Docker
+#   host and be set in the Portainer stack Env BEFORE the redeploy that
+#   introduces this variable, or the mount breaks.
 services:
   mysql:
     restart: unless-stopped
@@ -41,7 +51,7 @@ services:
       SEMAPHORE_ACCESS_KEY_ENCRYPTION: $SEMAPHORE_ACCESS_KEY_ENCRYPTION
       TZ: Europe/Madrid
     volumes:
-      - /home/notolac/.ssh/semaphore_runner:/tmp/orch_ssh:ro
+      - ${SEMAPHORE_SSH_RUNNER_PATH:-/home/notolac/.ssh/semaphore_runner}:/tmp/orch_ssh:ro
     depends_on:
       mysql:
         condition: service_healthy
