@@ -92,6 +92,15 @@ live under [`k3s/configs/`](k3s/configs/).
 | Vaultwarden | [vaultwarden/](k3s/apps/vaultwarden/) | App + PVC |
 | Wallos | [wallos/](k3s/apps/wallos/) | App + PVCs |
 
+Cluster infrastructure (Helm releases under [`k3s/helm/`](k3s/helm/)).
+Publishing guide: [`k3s/docs/ingress-traefik.md`](k3s/docs/ingress-traefik.md).
+
+| Release | Folder | Chart |
+|---------|--------|-------|
+| Traefik (ingress) | [traefik/](k3s/helm/traefik/) | `traefik/traefik` |
+| Authentik (SSO) | [authentik/](k3s/helm/authentik/) | `authentik/authentik` |
+| Portainer (cluster UI) | [portainer/](k3s/helm/portainer/) | `portainer/portainer` |
+
 ## Choosing standalone vs Swarm
 
 | Use standalone when… | Use Swarm when… |

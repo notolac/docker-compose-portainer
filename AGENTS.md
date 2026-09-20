@@ -52,6 +52,8 @@ No root CI yet. No top-level Makefile/package manager project.
 | K3s apps + Helm values | [k3s/apps/README.md](k3s/apps/README.md) · [k3s/helm/README.md](k3s/helm/README.md) |
 | Docker deploy (Portainer + CLI) | [README.md](README.md) (`Deploying a stack`) |
 | Docker install (Ubuntu / Debian) | [README.md](README.md) (`Installing Docker`) |
+| Portainer versions (2.45 LTS vs 3.x) | [README.md](README.md) (`Installing Portainer`) · [3.0 announcement](https://www.portainer.io/blog/portainer-3-0-is-coming) |
+| Portainer API (agents/automation) | [API docs (EE 2.45.1)](https://api-docs.portainer.io/?edition=ee&version=2.45.1) |
 
 ---
 

@@ -299,6 +299,15 @@ $RECYCLE.BIN/
 kubeconfig
 kubeconfig.yaml
 
+# Local Helm value copies with real hosts (see k3s/helm/*/README.md)
+my-*-values.yaml
+authentik-secrets.env
+secrets.env
+traefik.yaml.env
+
+# Traefik ACME state (never commit)
+acme.json
+
 # End of https://www.toptal.com/developers/gitignore/api/go,vim,pycharm,terraform,visualstudiocode,macos,windows
 
 !requirements.txt

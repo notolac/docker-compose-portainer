@@ -1,0 +1,61 @@
+# Portainer Helm values — TEMPLATE (placeholders only, no secrets).
+# Chart: portainer/portainer — pin a version at install: helm search repo portainer/portainer
+# Copy to my-portainer-values.yaml, set YOUR LoadBalancer IP + StorageClass,
+# never commit the copy. Docs: https://docs.portainer.io/start/upgrade/kubernetes
+#
+# Required inputs:
+#   - PORTAINER_LB_IP .... free IP of YOUR LAN for the Portainer LoadBalancer
+#                          (must sit inside your MetalLB pool — different IP
+#                          from the Traefik VIP)
+#   - STORAGE_CLASS ...... yours (defaults below are examples)
+#   - IMAGE_TAG .......... must match the portainer/agent tag on external hosts
+
+# Portainer 3.x ships no separate CE build (free via 3 Nodes Free instead —
+# see https://www.portainer.io/blog/portainer-3-0-is-coming). Set enabled: false
+# only if you stay on the 2.x CE codebase.
+enterpriseEdition:
+  enabled: true
+  image:
+    repository: portainer/portainer-ee
+    # Floating STS tag — currently tracks the 3.x STS line. Pin an exact
+    # version for reproducibility once validated
+    # (server and agents must share the same tag).
+    tag: "sts"
+    pullPolicy: Always
+
+# Manage the cluster Portainer runs in (required).
+localMgmt: true
+
+service:
+  type: LoadBalancer
+  annotations:
+    # Set YOUR free LAN IP (inside your MetalLB pool). Example range:
+    # see ../../configs/metallb/ipaddresspool.yaml.example
+    metallb.universe.tf/loadBalancerIPs: "192.168.1.241"
+
+tls:
+  force: true
+
+persistence:
+  enabled: true
+  storageClass: ceph-block  # change to YOURS
+  size: 5Gi
+  # To reuse an existing claim (license + environments survive upgrades), uncomment:
+  # existingClaim: portainer-data
+
+# Placement: this chart honours nodeSelector (not affinity) in some versions.
+# Assign YOUR nodes here if needed. Example hostnames snippet:
+# see ../../configs/placement/prefer-compute-affinity.yaml
+# nodeSelector:
+#   kubernetes.io/hostname: node-03
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 512Mi
+
+# Post-install:
+#   1. UI: https://<PORTAINER_LB_IP>:9443 (or the Traefik router) — create admin user
+#   2. Environments: Kubernetes (in-cluster) + optional Docker agents (:9001)

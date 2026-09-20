@@ -24,14 +24,27 @@ If you maintain a private homelab repo, treat this one as the **source of truth 
 
 - Docker Engine with the [Compose plugin](https://docs.docker.com/compose/install/)
 - (Optional) Docker Swarm initialized for `*-swarm.yaml` stacks
-- (Recommended) [Portainer CE](https://docs.portainer.io/) for web-based deployment
+- (Recommended) [Portainer](https://docs.portainer.io/) for web-based deployment
+  (2.45 LTS on Docker; 3.x STS is Kubernetes-first — see
+  [Installing Portainer](#installing-portainer))
 - (Optional, for `k3s/`) `kubectl` and (when used) Helm
 
-## Installing Portainer CE 2.42.0 STS
+## Installing Portainer
 
-We pin **Portainer CE STS 2.42.0** for consistency with current Short Term Support releases.
+We pin **Portainer 2.45.1 LTS** for the Docker quickstart below: 2.45 is the
+last 2.x line (maintained with security/bug fixes), and it is the last line
+with a separate CE build.
 
-### Portainer Server
+> **Preparing for Portainer 3:** per the
+> [3.0 announcement](https://www.portainer.io/blog/portainer-3-0-is-coming),
+> 3.x starts as STS, is Kubernetes-first, and ships **no separate CE build**
+> (it stays free for the community via 3 Nodes Free instead). Docker/Podman
+> environments keep working but receive no new capabilities, so start
+> evaluating 3.x on Kubernetes — see [`k3s/helm/portainer/`](k3s/helm/portainer/).
+> Until then, agents and automation should target the current API docs:
+> [Portainer API (EE 2.45.1)](https://api-docs.portainer.io/?edition=ee&version=2.45.1).
+
+### Portainer Server (2.45.1 LTS)
 
 ```bash
 docker volume create portainer_data
@@ -43,12 +56,12 @@ docker run -d \
   --restart=always \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v portainer_data:/data \
-  portainer/portainer-ce:2.42.0
+  portainer/portainer-ce:2.45.1
 ```
 
 Open `https://<your-host>:9443`, create the admin user, and connect to the local Docker environment.
 
-### Portainer Agent (optional)
+### Portainer Agent (optional, must match the server tag)
 
 Install on remote Docker hosts you want to manage from a central Portainer instance:
 
@@ -60,12 +73,16 @@ docker run -d \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v /var/lib/docker/volumes:/var/lib/docker/volumes \
   -v /:/host \
-  portainer/agent:2.42.0
+  portainer/agent:2.45.1
 ```
 
 Then add the environment in Portainer → **Environments** → **Add environment** → **Agent**.
 
-> **Note:** `:sts` tracks the latest STS release; `:2.42.0` pins this exact version. See [Portainer CE on Docker](https://docs.portainer.io/sts/start/install-ce/server/docker/linux).
+> **Note:** `:lts` tracks the latest LTS release and `:sts` the latest STS;
+> `:2.45.1` pins this exact version. Server and agent tags must match.
+> See [Portainer on Docker](https://docs.portainer.io/start/install-ce/server/docker/linux)
+> and the [3.0 announcement](https://www.portainer.io/blog/portainer-3-0-is-coming)
+> before adopting 3.x.
 
 ## Deploying a stack
 
@@ -94,6 +111,49 @@ docker stack deploy -c docker/<service>/<file>-swarm.yaml <stack-name>
 kubectl apply --dry-run=client -k k3s/apps/<app>/
 kubectl apply -k k3s/apps/<app>/
 ```
+
+## Publishing apps to the internet
+
+Deploying gets an app running inside your network; **publishing** exposes it
+to the internet through a reverse proxy: a single public entry (ports 80/443)
+that routes each hostname to the right backend and terminates TLS. Each
+orchestrator in this repo has its own standard proxy:
+
+| | Docker (`docker/`) | K3s (`k3s/`) |
+|---|---|---|
+| Proxy | **Nginx Proxy Manager (NPM)** | **Traefik** |
+| Configure via | Web UI (point-and-click proxy hosts) | CLI + config-as-code (YAML values, Ingress, routers) |
+| TLS | Let's Encrypt from the UI | Let's Encrypt via ACME DNS-01 resolver |
+| Best for | Homelab beginners | Users comfortable with manifests and Helm |
+| Start here | [`docker/nginx-proxy-manager-goaccess/`](docker/nginx-proxy-manager-goaccess/) | [`k3s/docs/ingress-traefik.md`](k3s/docs/ingress-traefik.md) |
+
+### Docker → NPM (UI-friendly)
+
+NPM wraps Nginx in an admin UI: you create proxy hosts, request certificates,
+and attach access lists in the browser instead of editing config files. That
+makes it the recommended path if you are starting out with a home server.
+The stack also ships GoAccess log analytics and a hardened header template:
+
+- Stack + walkthrough: [`docker/nginx-proxy-manager-goaccess/`](docker/nginx-proxy-manager-goaccess/)
+  (see [`README.md`](docker/nginx-proxy-manager-goaccess/README.md),
+  [`GoAccess.md`](docker/nginx-proxy-manager-goaccess/GoAccess.md))
+- Alternative on Docker: a Traefik-based stack lives in
+  [`docker/traefik/`](docker/traefik/) if you prefer Traefik everywhere —
+  but on single-host Docker, NPM is the simpler choice.
+
+### K3s → Traefik (config-as-code)
+
+On K3s there is no click-to-configure proxy: Traefik is installed with Helm
+and everything (entrypoints, certificates, middlewares, routers) is declared
+in YAML. It is more powerful and Git-friendly, but expects you to be at ease
+with the CLI, manifests, and Helm values — noticeably less beginner-friendly
+than NPM:
+
+- Publishing guide (dual Ingress/file-provider model, Cloudflare real IP,
+  Authentik SSO, ACME): [`k3s/docs/ingress-traefik.md`](k3s/docs/ingress-traefik.md)
+- Install + shared middlewares: [`k3s/helm/traefik/`](k3s/helm/traefik/)
+- SSO provider: [`k3s/helm/authentik/`](k3s/helm/authentik/) ·
+  cluster UI: [`k3s/helm/portainer/`](k3s/helm/portainer/)
 
 ## Conventions
 

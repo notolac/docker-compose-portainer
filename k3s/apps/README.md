@@ -21,3 +21,7 @@ Conventions: no personal hosts, IPs, or secrets (see [`../README.md`](../README.
 and [`../../AGENTS.md`](../../AGENTS.md)). Default `storageClassName` is the
 Rook-Ceph `ceph-block` — see [`../configs/rook/`](../configs/rook/) — change it
 to yours. Validate with `kubectl apply --dry-run=client -k <app>/`.
+
+Publishing: every app is exposed through Traefik — standard `ingress.yaml`
+by default, file-provider router as the advanced path. Guide + shared
+middleware catalog: [`../docs/ingress-traefik.md`](../docs/ingress-traefik.md).
