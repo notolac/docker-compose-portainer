@@ -5,7 +5,7 @@ volumes:
 
 services:
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.14.0
     container_name: prometheus
     ports:
       - $HOST_1PORT:9090
@@ -16,7 +16,7 @@ services:
     restart: unless-stopped
 
   node_exporter:
-    image: quay.io/prometheus/node-exporter:latest
+    image: quay.io/prometheus/node-exporter:v1.12.1
     container_name: node_exporter
     ports:
       - $HOST_2PORT:9100
@@ -27,7 +27,7 @@ services:
       - /:/host:ro,rslave
 
   cadvisor:
-    image: ghcr.io/google/cadvisor:latest
+    image: ghcr.io/google/cadvisor:v0.60.6
     container_name: cadvisor
     ports:
       - $HOST_3PORT:8080
