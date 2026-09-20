@@ -1,0 +1,77 @@
+# OpenSearch (secondary index) for Onyx — generic manifests.
+# Admin password comes from the `onyx-env` Secret. Single-node mode.
+# Change `storageClassName` to yours (default here: Rook-Ceph `ceph-block`).
+apiVersion: v1
+kind: Service
+metadata:
+  name: opensearch
+  namespace: onyx
+spec:
+  selector:
+    app: onyx-opensearch
+  ports:
+    - name: http
+      port: 9200
+      targetPort: 9200
+    - name: transport
+      port: 9600
+      targetPort: 9600
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: opensearch
+  namespace: onyx
+spec:
+  serviceName: opensearch
+  replicas: 1
+  selector:
+    matchLabels:
+      app: onyx-opensearch
+  template:
+    metadata:
+      labels:
+        app: onyx-opensearch
+    spec:
+      securityContext:
+        fsGroup: 1000
+      enableServiceLinks: false
+      containers:
+        - name: opensearch
+          image: opensearchproject/opensearch:3.4.0
+          env:
+            - name: discovery.type
+              value: single-node
+            - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: onyx-env
+                  key: OPENSEARCH_ADMIN_PASSWORD
+            - name: bootstrap.memory_lock
+              value: "true"
+            - name: OPENSEARCH_JAVA_OPTS
+              value: "-Xms2g -Xmx2g"
+          ports:
+            - containerPort: 9200
+            - containerPort: 9600
+          securityContext:
+            capabilities:
+              add: ["IPC_LOCK"]
+          volumeMounts:
+            - name: data
+              mountPath: /usr/share/opensearch/data
+          resources:
+            requests:
+              cpu: 250m
+              memory: 3Gi
+            limits:
+              memory: 4Gi
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: ceph-block
+        resources:
+          requests:
+            storage: 10Gi

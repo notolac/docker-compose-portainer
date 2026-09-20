@@ -1,0 +1,19 @@
+# Generic Ingress example — set your host, TLS, and ingress class, then apply.
+# Keep BASE_URL in the mealie-env Secret in sync with this host.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mealie
+  namespace: mealie
+spec:
+  rules:
+    - host: mealie.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mealie
+                port:
+                  number: 9000

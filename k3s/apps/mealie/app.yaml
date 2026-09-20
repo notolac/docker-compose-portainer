@@ -1,0 +1,146 @@
+# Mealie — generic K3s manifests (no personal hosts, IPs, or secrets).
+# Storage: change `storageClassName` to yours (default here: Rook-Ceph `ceph-block`).
+# Secrets live in `mealie-env` (see mealie-k3s.env.example); adjust TZ as needed.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mealie
+  namespace: mealie
+spec:
+  selector:
+    app: mealie
+  ports:
+    - port: 9000
+      targetPort: 9000
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mealie-data
+  namespace: mealie
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ceph-block
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mealie
+  namespace: mealie
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mealie
+  template:
+    metadata:
+      labels:
+        app: mealie
+    spec:
+      containers:
+        - name: mealie
+          image: ghcr.io/mealie-recipes/mealie:v3.27.0
+          ports:
+            - containerPort: 9000
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: Etc/UTC
+            - name: BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-env
+                  key: BASE_URL
+            - name: ALLOW_SIGNUP
+              value: "false"
+            - name: API_DOCS
+              value: "True"
+            - name: LOG_LEVEL
+              value: info
+            - name: DAILY_SCHEDULE_TIME
+              value: "23:45"
+            - name: UVICORN_WORKERS
+              value: "1"
+            - name: DB_ENGINE
+              value: sqlite
+            - name: SQLITE_MIGRATE_JOURNAL_WAL
+              value: "false"
+            - name: SMTP_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-env
+                  key: SMTP_HOST
+            - name: SMTP_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-env
+                  key: SMTP_PORT
+            - name: SMTP_FROM_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-env
+                  key: SMTP_FROM_NAME
+            - name: SMTP_AUTH_STRATEGY
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-env
+                  key: SMTP_AUTH_STRATEGY
+            - name: SMTP_FROM_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-env
+                  key: SMTP_FROM_EMAIL
+            - name: SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-env
+                  key: SMTP_USER
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-env
+                  key: SMTP_PASSWORD
+            - name: OPENAI_BASE_URL
+              value: https://api.openai.com/v1
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-env
+                  key: OPENAI_API_KEY
+            - name: OPENAI_MODEL
+              value: gpt-4o-mini
+            - name: OPENAI_ENABLE_IMAGE_SERVICES
+              value: "false"
+            - name: OPENAI_WORKERS
+              value: "0"
+            - name: OPENAI_SEND_DATABASE_DATA
+              value: "false"
+            - name: OPENAI_REQUEST_TIMEOUT
+              value: "300"
+            - name: SECURITY_MAX_LOGIN_ATTEMPTS
+              value: "5"
+            - name: SECURITY_USER_LOCKOUT_TIME
+              value: "1"
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          resources:
+            requests:
+              cpu: 250m
+              memory: 500Mi
+            limits:
+              cpu: "0.5"
+              memory: 1000Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: mealie-data

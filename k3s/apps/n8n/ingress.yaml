@@ -1,0 +1,19 @@
+# Generic Ingress example — set your host, TLS, and ingress class, then apply.
+# Keep N8N_HOST / N8N_EDITOR_BASE_URL / WEBHOOK_URL in app.yaml in sync with this host.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: n8n
+  namespace: n8n
+spec:
+  rules:
+    - host: n8n.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: n8n
+                port:
+                  number: 5678

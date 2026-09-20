@@ -1,0 +1,83 @@
+# Linkding — generic K3s manifests (no personal hosts, IPs, or secrets).
+# Storage: change `storageClassName` to yours (default here: Rook-Ceph `ceph-block`).
+# Set LD_CSRF_TRUSTED_ORIGINS to your public URL (see linkding-k3s.env.example notes).
+apiVersion: v1
+kind: Service
+metadata:
+  name: linkding
+  namespace: linkding
+spec:
+  selector:
+    app: linkding
+  ports:
+    - port: 9090
+      targetPort: 9090
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: linkding-data
+  namespace: linkding
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ceph-block
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linkding
+  namespace: linkding
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: linkding
+  template:
+    metadata:
+      labels:
+        app: linkding
+    spec:
+      containers:
+        - name: linkding
+          image: sissbruecker/linkding:1.47.0
+          ports:
+            - containerPort: 9090
+          env:
+            - name: LD_CONTAINER_NAME
+              value: linkding_app
+            - name: LD_CONTEXT_PATH
+              value: ""
+            - name: LD_DISABLE_BACKGROUND_TASKS
+              value: "False"
+            - name: LD_DISABLE_URL_VALIDATION
+              value: "False"
+            - name: LD_ENABLE_AUTH_PROXY
+              value: "False"
+            # Your public URL (comma-separated if several). Required behind a proxy.
+            - name: LD_CSRF_TRUSTED_ORIGINS
+              value: https://linkding.example.com
+            - name: LD_LOG_X_FORWARDED_FOR
+              value: "True"
+            - name: LD_REQUEST_MAX_CONTENT_LENGTH
+              value: "10485760"
+            - name: LD_ENABLE_OIDC
+              value: "False"
+          volumeMounts:
+            - name: data
+              mountPath: /etc/linkding/data
+          resources:
+            requests:
+              cpu: 25m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: linkding-data

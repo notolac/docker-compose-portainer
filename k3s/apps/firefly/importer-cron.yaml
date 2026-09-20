@@ -1,0 +1,99 @@
+# Firefly III data importer + cron — generic K3s manifests (no personal data).
+# The importer is exposed as ClusterIP here (internal use). Expose it via your
+# own Ingress/LoadBalancer only if you need browser access to it.
+# Secrets: `firefly-env` (STATIC_CRON_TOKEN) and optional `firefly-importer-eb`
+# (banking integration) — see firefly-k3s.env.example.
+apiVersion: v1
+kind: Service
+metadata:
+  name: firefly-importer
+  namespace: firefly
+spec:
+  type: ClusterIP
+  selector:
+    app: firefly-importer
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: firefly-importer
+  namespace: firefly
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: firefly-importer
+  template:
+    metadata:
+      labels:
+        app: firefly-importer
+    spec:
+      containers:
+        - name: importer
+          image: fireflyiii/data-importer:latest
+          ports:
+            - containerPort: 8080
+          # Do NOT envFrom firefly-env: that injects APP_KEY/DB/APP_URL from core
+          # and breaks importer auth. Only pass importer-specific vars.
+          env:
+            # Server-side API (in-cluster). Browser OAuth uses VANITY_URL.
+            # https://docs.firefly-iii.org/how-to/data-importer/how-to-configure/
+            - name: FIREFLY_III_URL
+              value: "http://firefly-app.firefly.svc.cluster.local:8080"
+            - name: VANITY_URL
+              value: "https://firefly.example.com"
+            - name: TZ
+              value: Etc/UTC
+            - name: TRUSTED_PROXIES
+              value: "*"
+            - name: APP_ENV
+              value: local
+            - name: APP_DEBUG
+              value: "false"
+            - name: MAIL_MAILER
+              value: log
+            - name: ENABLE_MAIL_REPORT
+              value: "false"
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: firefly-cron
+  namespace: firefly
+spec:
+  schedule: "0 3 * * *"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: cron
+              image: curlimages/curl:8.11.1
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  wget -qO- "http://firefly-app.firefly.svc.cluster.local:8080/api/v1/cron/${STATIC_CRON_TOKEN}"
+              env:
+                - name: STATIC_CRON_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: firefly-env
+                      key: STATIC_CRON_TOKEN

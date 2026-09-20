@@ -1,0 +1,16 @@
+# odoo.conf TEMPLATE — replace the placeholder passwords, then create the Secret:
+#   kubectl -n odoo create secret generic odoo-config --from-file=odoo.conf=odoo.conf
+# Mounting via Secret keeps admin_passwd stable across redeploys (otherwise Odoo
+# regenerates the master password on every restart). proxy_mode=True is required
+# behind a reverse proxy.
+[options]
+admin_passwd = change-me-master-password
+proxy_mode = True
+db_host = postgres
+db_port = 5432
+db_user = odoo
+db_password = change-me-db-password
+addons_path = /mnt/extra-addons
+data_dir = /var/lib/odoo
+workers = 2
+gevent_port = 8072

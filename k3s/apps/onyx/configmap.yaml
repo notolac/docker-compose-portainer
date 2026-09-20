@@ -1,0 +1,43 @@
+# Onyx shared non-secret config. Secrets live in `onyx-env` (see onyx-k3s.env.example).
+# Set WEB_DOMAIN / DOMAIN / VALID_EMAIL_DOMAINS to your own host and domains.
+# Default MinIO/S3 credentials below are well-known defaults — change them via
+# the Secret for anything beyond a local test (see README).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: onyx-config
+  namespace: onyx
+data:
+  AUTH_TYPE: basic
+  FILE_STORE_BACKEND: s3
+  POSTGRES_HOST: postgres
+  POSTGRES_DB: onyx_db
+  VESPA_HOST: vespa
+  OPENSEARCH_HOST: opensearch
+  ENABLE_OPENSEARCH_INDEXING_FOR_ONYX: "true"
+  REDIS_HOST: redis
+  MODEL_SERVER_HOST: inference-model-server
+  MODEL_SERVER_PORT: "9000"
+  INDEXING_MODEL_SERVER_HOST: indexing-model-server
+  INDEXING_MODEL_SERVER_PORT: "9001"
+  API_SERVER_PROTOCOL: http
+  API_SERVER_HOST: api-server
+  INTERNAL_URL: http://api-server:8080
+  S3_ENDPOINT_URL: http://minio:9000
+  S3_AWS_ACCESS_KEY_ID: minioadmin
+  S3_FILE_STORE_BUCKET_NAME: onyx-file-store-bucket
+  ENABLE_CRAFT: "false"
+  CODE_INTERPRETER_BASE_URL: http://code-interpreter:8000
+  PERSISTENT_DOCUMENT_STORAGE_PATH: /app/file-system
+  WEB_DOMAIN: https://onyx.example.com
+  SMTP_PORT: "587"
+  ENABLE_EMAIL_INVITES: "true"
+  REQUIRE_EMAIL_VERIFICATION: "true"
+  VALID_EMAIL_DOMAINS: example.com
+  DOMAIN: onyx.example.com
+  ONYX_BACKEND_API_HOST: api-server
+  ONYX_WEB_SERVER_HOST: web-server
+  NGINX_PROXY_CONNECT_TIMEOUT: "300"
+  NGINX_PROXY_SEND_TIMEOUT: "300"
+  NGINX_PROXY_READ_TIMEOUT: "300"
+  MCP_SERVER_ENABLED: "false"

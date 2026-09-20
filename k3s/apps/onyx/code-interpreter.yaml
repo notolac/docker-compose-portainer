@@ -1,0 +1,305 @@
+# Onyx code interpreter — Kubernetes executor (no Docker socket, no privileged DinD).
+# API lives in ns onyx; ephemeral Python pods run in onyx-sandbox.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: onyx-sandbox
+  labels:
+    app.kubernetes.io/name: onyx
+    app.kubernetes.io/component: code-interpreter
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: sandbox
+  namespace: onyx-sandbox
+spec:
+  hard:
+    pods: "8"
+    requests.cpu: "2"
+    requests.memory: 1Gi
+    limits.cpu: "8"
+    limits.memory: 2Gi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: sandbox
+  namespace: onyx-sandbox
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: 100m
+        memory: 64Mi
+      defaultRequest:
+        cpu: 50m
+        memory: 64Mi
+      max:
+        cpu: "1"
+        memory: 256Mi
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: executor-deny-all
+  namespace: onyx-sandbox
+spec:
+  # python-sandbox labels execution pods `component: executor` (HOW_IT_WORKS).
+  podSelector:
+    matchLabels:
+      component: executor
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress: []
+  egress: []
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: code-interpreter
+  namespace: onyx
+  labels:
+    app: onyx-code-interpreter
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sandbox-gc
+  namespace: onyx-sandbox
+---
+# Executor pods use the namespace default SA (upstream does not set one).
+# Disable the projected token so they cannot call the API even by accident.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: onyx-sandbox
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: code-interpreter
+  namespace: onyx-sandbox
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["create", "get", "list", "watch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create", "get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: sandbox-gc
+  namespace: onyx-sandbox
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: code-interpreter
+  namespace: onyx-sandbox
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: code-interpreter
+subjects:
+  - kind: ServiceAccount
+    name: code-interpreter
+    namespace: onyx
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: sandbox-gc
+  namespace: onyx-sandbox
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: sandbox-gc
+subjects:
+  - kind: ServiceAccount
+    name: sandbox-gc
+    namespace: onyx-sandbox
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: code-interpreter
+  namespace: onyx
+  labels:
+    app: onyx-code-interpreter
+spec:
+  selector:
+    app: onyx-code-interpreter
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: code-interpreter
+  namespace: onyx
+  labels:
+    app: onyx-code-interpreter
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: onyx-code-interpreter
+  template:
+    metadata:
+      labels:
+        app: onyx-code-interpreter
+        app.kubernetes.io/part-of: onyx
+    spec:
+      serviceAccountName: code-interpreter
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: api
+          image: onyxdotapp/code-interpreter:0.4.6
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop: ["ALL"]
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: EXECUTOR_BACKEND
+              value: kubernetes
+            - name: HOST
+              value: "0.0.0.0"
+            - name: PORT
+              value: "8000"
+            - name: MAX_EXEC_TIMEOUT_MS
+              value: "60000"
+            - name: MAX_OUTPUT_BYTES
+              value: "1000000"
+            - name: CPU_TIME_LIMIT_SEC
+              value: "1"
+            - name: MEMORY_LIMIT_MB
+              value: "256"
+            - name: KUBERNETES_EXECUTOR_NAMESPACE
+              value: onyx-sandbox
+            - name: KUBERNETES_EXECUTOR_IMAGE
+              value: onyxdotapp/python-executor-sci:0.4.7
+            - name: KUBERNETES_EXECUTOR_NET_ADMIN_LOCKDOWN
+              value: "false"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sandbox-gc
+  namespace: onyx-sandbox
+spec:
+  schedule: "*/15 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 300
+      template:
+        spec:
+          serviceAccountName: sandbox-gc
+          restartPolicy: OnFailure
+          enableServiceLinks: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            # rancher/kubectl is distroless (no /bin/sh). Two containers, one selector each.
+            - name: gc-succeeded
+              image: rancher/kubectl:v1.32.2
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                allowPrivilegeEscalation: false
+                runAsNonRoot: true
+                runAsUser: 1001
+                capabilities:
+                  drop: ["ALL"]
+              command:
+                - kubectl
+                - delete
+                - pod
+                - -n
+                - onyx-sandbox
+                - --field-selector=status.phase=Succeeded
+                - --ignore-not-found
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 64Mi
+            - name: gc-failed
+              image: rancher/kubectl:v1.32.2
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                allowPrivilegeEscalation: false
+                runAsNonRoot: true
+                runAsUser: 1001
+                capabilities:
+                  drop: ["ALL"]
+              command:
+                - kubectl
+                - delete
+                - pod
+                - -n
+                - onyx-sandbox
+                - --field-selector=status.phase=Failed
+                - --ignore-not-found
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 64Mi

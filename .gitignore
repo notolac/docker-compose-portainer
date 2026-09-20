@@ -293,6 +293,12 @@ $RECYCLE.BIN/
 !.env.example
 !.env.template
 
+# K3s / Kubernetes local files (never commit secrets or per-cluster state)
+*-k3s.env
+*.kubeconfig
+kubeconfig
+kubeconfig.yaml
+
 # End of https://www.toptal.com/developers/gitignore/api/go,vim,pycharm,terraform,visualstudiocode,macos,windows
 
 !requirements.txt

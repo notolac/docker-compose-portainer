@@ -1,0 +1,90 @@
+# Odoo — generic K3s manifests (no personal hosts, IPs, or secrets).
+# Storage: change `storageClassName` to yours (default here: Rook-Ceph `ceph-block`).
+# odoo.conf is mounted from the `odoo-config` Secret (render it from
+# odoo.conf.template with your own admin_passwd + db_password).
+# fsGroup 101: the Odoo image runs as uid/gid 101 and needs the filestore writable.
+apiVersion: v1
+kind: Service
+metadata:
+  name: odoo
+  namespace: odoo
+spec:
+  selector:
+    app: odoo
+  ports:
+    - name: http
+      port: 8069
+      targetPort: 8069
+    - name: websocket
+      port: 8072
+      targetPort: 8072
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: odoo-filestore
+  namespace: odoo
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ceph-block
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: odoo
+  namespace: odoo
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: odoo
+  template:
+    metadata:
+      labels:
+        app: odoo
+    spec:
+      securityContext:
+        fsGroup: 101
+      containers:
+        - name: odoo
+          image: odoo:19
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8069
+            - containerPort: 8072
+          volumeMounts:
+            - name: filestore
+              mountPath: /var/lib/odoo
+            - name: config
+              mountPath: /etc/odoo/odoo.conf
+              subPath: odoo.conf
+              readOnly: true
+          readinessProbe:
+            tcpSocket:
+              port: 8069
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8069
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+      volumes:
+        - name: filestore
+          persistentVolumeClaim:
+            claimName: odoo-filestore
+        - name: config
+          secret:
+            secretName: odoo-config

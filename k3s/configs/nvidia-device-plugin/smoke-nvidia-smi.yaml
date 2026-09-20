@@ -1,0 +1,18 @@
+# nvidia-smi smoke test — GPU nodes only. Delete the pod after verifying.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nvidia-smi-smoke
+  namespace: kube-system
+spec:
+  restartPolicy: Never
+  runtimeClassName: nvidia
+  nodeSelector:
+    gpu: nvidia
+  containers:
+    - name: nvidia-smi
+      image: nvidia/cuda:12.6.3-base-ubuntu24.04
+      command: ["nvidia-smi", "-L"]
+      resources:
+        limits:
+          nvidia.com/gpu: 1

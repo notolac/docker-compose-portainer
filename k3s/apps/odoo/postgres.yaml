@@ -1,0 +1,68 @@
+# PostgreSQL 16 for Odoo — generic manifests (no personal data).
+# The `odoo` role password comes from the `odoo-db-env` Secret.
+# Odoo manages its own databases, so the role needs CREATEDB (superuser here,
+# same as upstream Odoo compose setups).
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: odoo
+spec:
+  selector:
+    app: odoo-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: odoo
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: odoo-postgres
+  template:
+    metadata:
+      labels:
+        app: odoo-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16.1
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: postgres
+            - name: POSTGRES_USER
+              value: odoo
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: odoo-db-env
+                  key: POSTGRES_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: ceph-block
+        resources:
+          requests:
+            storage: 10Gi

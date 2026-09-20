@@ -1,0 +1,222 @@
+# LiteLLM + PostgreSQL (Docker Compose Standalone)
+# https://github.com/BerriAI/litellm
+#
+# OpenAI-compatible LLM proxy with model management (port 4000) + PostgreSQL
+# for model/key storage (internal port 5432). Point any chat UI (or your apps)
+# at http://<host>:4000 with LITELLM_MASTER_KEY as the bearer token.
+#
+# ===========================================
+# DEPLOYMENT STEPS:
+# ===========================================
+# 1. Create required directories with correct permissions (see below)
+# 2. Generate secure keys (see STEP 1 below)
+# 3. Configure environment variables in Portainer or .env file
+# 4. Deploy the stack
+#
+# ===========================================
+# REQUIRED ENVIRONMENT VARIABLES:
+# ===========================================
+# ⚠️  IMPORTANT: In Portainer, DO NOT use quotes around variable values!
+# ⚠️  Example: DATABASE_URL=postgresql://... (WITHOUT quotes)
+#
+# - DATABASE_URL: Complete PostgreSQL connection string
+#   Format: postgresql://USER:PASSWORD@db:5432/DATABASE_NAME
+#   Example: postgresql://llmproxy:your_secure_password@db:5432/litellm
+# - LITELLM_MASTER_KEY: Master key for LiteLLM authentication (GENERATE FIRST!)
+# - LITELLM_SALT_KEY: Salt key for LiteLLM encryption (GENERATE FIRST!)
+# - POSTGRES_DB: PostgreSQL database name (e.g., litellm)
+# - POSTGRES_USER: PostgreSQL username (e.g., llmproxy)
+# - POSTGRES_PASSWORD: PostgreSQL password (REQUIRED)
+#
+# Optional variables (with defaults):
+# - LITELLM_HOST_PORT: External port for LiteLLM (default: 4000)
+# - LITELLM_DATA_PATH: Path for PostgreSQL data (default: /opt/litellm/litellm-db)
+#
+# ===========================================
+# STEP 1: Generate Secure Keys and Configure Variables (REQUIRED)
+# ===========================================
+# Execute these commands in your terminal BEFORE deploying:
+#
+# 1. Generate LITELLM_MASTER_KEY:
+#   echo "sk-$(openssl rand -hex 24)"
+#
+# 2. Generate LITELLM_SALT_KEY:
+#   echo "sk-$(openssl rand -hex 24)"
+#
+# 3. Configure DATABASE_URL:
+#   IMPORTANT: The DATABASE_URL must match your PostgreSQL credentials.
+#   Format: postgresql://POSTGRES_USER:POSTGRES_PASSWORD@db:5432/POSTGRES_DB
+#
+#   Example configuration in Portainer:
+#   POSTGRES_USER=llmproxy
+#   POSTGRES_PASSWORD=your_secure_password_here
+#   POSTGRES_DB=litellm
+#   DATABASE_URL=postgresql://llmproxy:your_secure_password_here@db:5432/litellm
+#
+#   Note: The username, password, and database name in DATABASE_URL MUST match
+#   the values in POSTGRES_USER, POSTGRES_PASSWORD, and POSTGRES_DB respectively.
+#
+# Save these values - you'll need them for Portainer or .env file!
+#
+# ===========================================
+# STEP 2: Create Directories (REQUIRED)
+# ===========================================
+# mkdir -p /opt/litellm/litellm-db
+# sudo chown -R $(id -u):$(id -g) /opt/litellm
+#
+# ===========================================
+# DEPLOYMENT INSTRUCTIONS:
+# ===========================================
+# Deploy with: docker compose -f litellm-standalone.yaml up -d
+#
+# Or using Portainer:
+# 1. Go to Stacks > Add stack
+# 2. Upload this file or paste its contents
+# 3. Add environment variables in the "Environment variables" section
+#    IMPORTANT: Do NOT use quotes around values!
+# 4. Click "Deploy the stack"
+#
+# ===========================================
+# TROUBLESHOOTING:
+# ===========================================
+# - Check container status: docker compose -f litellm-standalone.yaml ps
+# - View service logs: docker compose -f litellm-standalone.yaml logs -f <service_name>
+#   Example: docker compose -f litellm-standalone.yaml logs -f litellm
+# - Check all logs: docker compose -f litellm-standalone.yaml logs -f
+#
+# Common Issues:
+# --------------
+# 1. Database connection issues:
+#   * Error: "URL must start with postgresql://"
+#     → Remove quotes from DATABASE_URL in Portainer
+#   * Verify DATABASE_URL is set correctly
+#   * Format: postgresql://USER:PASSWORD@db:5432/DATABASE_NAME
+#   * Ensure POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD match DATABASE_URL
+#   * Ensure db service is healthy before litellm starts
+#   * Check db healthcheck: docker logs litellm-db
+#
+# 2. Healthcheck issues (Container keeps restarting):
+#   * Check healthcheck status: docker inspect litellm-litellm | grep -A 10 Health
+#   * Verify endpoint is responding: curl http://localhost:4000/health/liveliness
+#
+# 3. Volume permission issues:
+#   * Ensure directories exist: /opt/litellm/litellm-db
+#   * Check permissions: ls -la /opt/litellm
+#   * Fix permissions: sudo chown -R $(id -u):$(id -g) /opt/litellm
+#
+# 4. Port conflicts:
+#   * Check if ports are already in use: netstat -tuln | grep -E '4000|5432'
+#   * Change ports using environment variables (see optional variables above)
+#
+# 5. Verify environment variables: docker inspect litellm-litellm | grep -A 20 Env
+# ===========================================
+
+version: '3.8'
+
+services:
+  litellm:
+    image: ghcr.io/berriai/litellm:main-stable
+    container_name: litellm-litellm
+    restart: always
+    networks:
+      - litellm
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - STORE_MODEL_IN_DB=True
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
+      - LITELLM_SALT_KEY=${LITELLM_SALT_KEY}
+    ports:
+      - "${LITELLM_HOST_PORT:-4000}:4000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 -O /dev/null http://localhost:4000/health/liveliness || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  db:
+    image: postgres:16
+    container_name: litellm-db
+    restart: always
+    networks:
+      - litellm
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ${LITELLM_DATA_PATH:-/opt/litellm/litellm-db}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  litellm:
+    driver: bridge
+
+# ===========================================
+# EXAMPLE PORTAINER ENVIRONMENT VARIABLES CONFIGURATION
+# ===========================================
+# Copy and paste these into Portainer's "Environment variables" section
+# when deploying the stack. Replace the example values with your actual values.
+#
+# ⚠️  CRITICAL: DO NOT USE QUOTES around the values in Portainer!
+# ⚠️  Quotes will be included literally and cause connection errors.
+#
+# REQUIRED VARIABLES:
+# -------------------
+# DATABASE_URL=postgresql://llmproxy:your_secure_password_here@db:5432/litellm
+# LITELLM_MASTER_KEY=sk-your-generated-key
+# LITELLM_SALT_KEY=sk-your-generated-salt-key
+# POSTGRES_DB=litellm
+# POSTGRES_USER=llmproxy
+# POSTGRES_PASSWORD=your_secure_password_here
+#
+# OPTIONAL VARIABLES (uncomment if needed):
+# -----------------------------------------
+# LITELLM_HOST_PORT=4000
+# LITELLM_DATA_PATH=/opt/litellm/litellm-db
+#
+# IMPORTANT NOTES:
+# ----------------
+# 1. DO NOT use quotes (", ') around values - they will be included literally!
+#    ❌ WRONG: DATABASE_URL="postgresql://..."
+#    ✅ RIGHT: DATABASE_URL=postgresql://...
+#
+# 2. Ensure POSTGRES_USER, POSTGRES_PASSWORD, and POSTGRES_DB in DATABASE_URL
+#    match the individual POSTGRES_* variables exactly
+#
+# 3. Generate secure keys before deploying (see STEP 1 above)
+#
+# 4. Keep your keys and passwords secure - never commit them to version control
+#
+# 5. Common errors:
+#    - "URL must start with postgresql://" → Remove quotes from DATABASE_URL
+#    - "Connection refused" → Check POSTGRES_PASSWORD matches in both variables
+#    - "Database does not exist" → Verify POSTGRES_DB matches DATABASE_URL
+#    - "Permission denied" → Check directory permissions (see STEP 2 above)
+# ===========================================
+
+# ===========================================
+# EXAMPLE .env FILE
+# ===========================================
+# If deploying via docker-compose command line, create a .env file with:
+#
+# DATABASE_URL=postgresql://llmproxy:your_secure_password@db:5432/litellm
+# LITELLM_MASTER_KEY=sk-your-generated-master-key
+# LITELLM_SALT_KEY=sk-your-generated-salt-key
+# POSTGRES_DB=litellm
+# POSTGRES_USER=llmproxy
+# POSTGRES_PASSWORD=your_secure_password
+# LITELLM_HOST_PORT=4000
+# LITELLM_DATA_PATH=/opt/litellm/litellm-db
+#
+# Place this .env file in the same directory as litellm-standalone.yaml
+# Then deploy with: docker compose -f litellm-standalone.yaml up -d
+# ===========================================

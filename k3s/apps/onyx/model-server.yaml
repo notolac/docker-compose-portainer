@@ -1,0 +1,141 @@
+# Onyx model servers (inference :9000 + indexing :9001) — generic manifests.
+# Requires ONE GPU node: label it (e.g. `kubectl label node <gpu-node> gpu=nvidia`),
+# install the NVIDIA device plugin (see k3s/configs/nvidia-device-plugin/), and
+# adjust the nodeSelector below to match your label. Inference + indexing share
+# the single GPU; indexing listens on 9001 because both cannot bind :9000.
+apiVersion: v1
+kind: Service
+metadata:
+  name: inference-model-server
+  namespace: onyx
+spec:
+  selector:
+    app: onyx-model-server
+  ports:
+    - name: http
+      port: 9000
+      targetPort: 9000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: indexing-model-server
+  namespace: onyx
+spec:
+  selector:
+    app: onyx-model-server
+  ports:
+    - name: http
+      port: 9001
+      targetPort: 9001
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: inference-hf-cache
+  namespace: onyx
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: ceph-block
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: indexing-hf-cache
+  namespace: onyx
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: ceph-block
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-server
+  namespace: onyx
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: onyx-model-server
+  template:
+    metadata:
+      labels:
+        app: onyx-model-server
+    spec:
+      runtimeClassName: nvidia
+      nodeSelector:
+        gpu: nvidia
+      enableServiceLinks: false
+      containers:
+        - name: inference
+          image: onyxdotapp/onyx-model-server:v4.7.7
+          command: ["uvicorn"]
+          args: ["model_server.main:app", "--host", "0.0.0.0", "--port", "9000"]
+          ports:
+            - containerPort: 9000
+          volumeMounts:
+            - name: inference-hf
+              mountPath: /app/.cache/huggingface
+          resources:
+            requests:
+              cpu: 500m
+              memory: 3Gi
+              nvidia.com/gpu: "1"
+            limits:
+              memory: 10Gi
+              nvidia.com/gpu: "1"
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: 9000
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 9000
+            periodSeconds: 20
+        - name: indexing
+          image: onyxdotapp/onyx-model-server:v4.7.7
+          command: ["uvicorn"]
+          args: ["model_server.main:app", "--host", "0.0.0.0", "--port", "9001"]
+          env:
+            - name: INDEXING_ONLY
+              value: "True"
+          ports:
+            - containerPort: 9001
+          volumeMounts:
+            - name: indexing-hf
+              mountPath: /app/.cache/huggingface
+          resources:
+            requests:
+              cpu: 500m
+              memory: 3Gi
+            limits:
+              memory: 6Gi
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: 9001
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 9001
+            periodSeconds: 20
+      volumes:
+        - name: inference-hf
+          persistentVolumeClaim:
+            claimName: inference-hf-cache
+        - name: indexing-hf
+          persistentVolumeClaim:
+            claimName: indexing-hf-cache

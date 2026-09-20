@@ -1,8 +1,13 @@
 # docker-compose-portainer
 
-Public collection of **Docker Compose** and **Docker Swarm** stack files for self-hosted applications, designed to deploy via [Portainer](https://www.portainer.io/) or the Docker CLI.
+Public collection of **Docker Compose / Docker Swarm** stack files and generic **K3s manifests**
+for self-hosted applications, designed to deploy via [Portainer](https://www.portainer.io/),
+the Docker CLI, or `kubectl` / Helm.
 
 This repository is the **public, reusable** counterpart to a private homelab knowledge base. It contains generic manifests and documentation only — no hostnames, internal IPs, or personal paths.
+
+Top-level layout: [`docker/`](docker/) for Compose/Swarm stacks, [`k3s/`](k3s/) for Kubernetes
+manifests — one folder per service inside each of them.
 
 ## Relationship with private homelab docs
 
@@ -11,7 +16,7 @@ This repository is the **public, reusable** counterpart to a private homelab kno
 | Purpose | Shareable stacks for anyone | Architecture, hosts, runbooks, secrets |
 | Paths / IPs | Environment variables with neutral defaults | Real host paths and network layout |
 | Secrets | `.env.example` / Portainer env vars | Local `.env` files (never committed) |
-| Runtime | Docker Compose / Swarm | K3s (primary) + Compose on dedicated hosts |
+| Runtime | Docker Compose / Swarm (`docker/`) + K3s (`k3s/`) | K3s (primary) + Compose on dedicated hosts |
 
 If you maintain a private homelab repo, treat this one as the **source of truth for stack YAML** that third parties can fork. Keep operational details (SSH, DNS, backups, VLANs) in your private documentation.
 
@@ -20,6 +25,7 @@ If you maintain a private homelab repo, treat this one as the **source of truth 
 - Docker Engine with the [Compose plugin](https://docs.docker.com/compose/install/)
 - (Optional) Docker Swarm initialized for `*-swarm.yaml` stacks
 - (Recommended) [Portainer CE](https://docs.portainer.io/) for web-based deployment
+- (Optional, for `k3s/`) `kubectl` and (when used) Helm
 
 ## Installing Portainer CE 2.42.0 STS
 
@@ -71,19 +77,27 @@ Then add the environment in Portainer → **Environments** → **Add environment
 4. Create host directories referenced by `${...}` variables before deploying
 5. Deploy
 
-### Via CLI
+### Via CLI (Docker)
 
 ```bash
 # Standalone Compose
-docker compose -f <service>/<file>.yaml --env-file <service>/.env.example up -d
+docker compose -f docker/<service>/<file>.yaml --env-file docker/<service>/.env.example up -d
 
 # Swarm
-docker stack deploy -c <service>/<file>-swarm.yaml <stack-name>
+docker stack deploy -c docker/<service>/<file>-swarm.yaml <stack-name>
+```
+
+### Via CLI (K3s)
+
+```bash
+# Dry-run first, then apply (see k3s/README.md for conventions)
+kubectl apply --dry-run=client -k k3s/apps/<app>/
+kubectl apply -k k3s/apps/<app>/
 ```
 
 ## Conventions
 
-All stacks follow these rules so they work for third parties:
+All Docker stacks follow these rules so they work for third parties:
 
 | Rule | Example |
 |------|---------|
@@ -95,6 +109,9 @@ All stacks follow these rules so they work for third parties:
 
 Copy the matching `.env.example` (when present) to `.env` and adjust paths for your host.
 
+K3s manifests follow the same spirit (no personal hosts, IPs, or paths; secrets never
+committed) — see [`k3s/README.md`](k3s/README.md) for the per-app layout.
+
 ## Stack catalog
 
 See **[STACKS.md](STACKS.md)** for the full list of services, variants (standalone vs Swarm), and links to service-specific READMEs.
@@ -105,10 +122,18 @@ See **[STACKS.md](STACKS.md)** for the full list of services, variants (standalo
 docker-compose-portainer/
 ├── README.md              ← This file
 ├── STACKS.md              ← Service catalog
-├── <service-name>/
-│   ├── *.yaml             ← Compose or Swarm manifest
-│   ├── .env.example       ← Optional template (no secrets)
-│   └── README.md          ← Optional service notes
+├── AGENTS.md              ← Agent / contributor rules
+├── docker/                ← Compose / Swarm stacks (one folder per service)
+│   └── <service-name>/
+│       ├── *.yaml         ← Compose or Swarm manifest
+│       ├── .env.example   ← Optional template (no secrets)
+│       └── README.md      ← Optional service notes
+├── k3s/                   ← Generic K3s manifests (one app per folder)
+│   ├── apps/<app>/        ← namespace.yaml, app.yaml, ingress.yaml, …
+│   ├── helm/              ← Shared Helm values
+│   ├── scripts/           ← Helper scripts
+│   ├── docs/              ← K3s-only guides
+│   └── configs/           ← Shared non-secret configuration
 └── .gitignore
 ```
 

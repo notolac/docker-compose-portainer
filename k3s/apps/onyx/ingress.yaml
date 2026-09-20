@@ -1,0 +1,21 @@
+# Generic Ingress example — set your host, TLS, and ingress class, then apply.
+# Traffic goes to the nginx gateway (port 80), which routes /api/* to the API
+# and everything else to the web UI. Terminate TLS at the ingress.
+# Keep WEB_DOMAIN / DOMAIN in configmap.yaml in sync with this host.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: onyx
+  namespace: onyx
+spec:
+  rules:
+    - host: onyx.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx
+                port:
+                  number: 80

@@ -1,0 +1,106 @@
+# Firefly III core — generic K3s manifests (no personal hosts, IPs, or secrets).
+# Storage: change `storageClassName` to yours (default here: Rook-Ceph `ceph-block`).
+# The whole env template (firefly-k3s.env.example) becomes the `firefly-env` Secret
+# and is consumed via envFrom; explicit env entries below take precedence.
+# Set APP_URL / ASSET_URL / SANCTUM_STATEFUL_DOMAINS to your public host.
+# TRUSTED_PROXIES=** is per Firefly docs when running behind a reverse proxy.
+apiVersion: v1
+kind: Service
+metadata:
+  name: firefly-app
+  namespace: firefly
+spec:
+  selector:
+    app: firefly-app
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: firefly-upload
+  namespace: firefly
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ceph-block
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: firefly-app
+  namespace: firefly
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: firefly-app
+  template:
+    metadata:
+      labels:
+        app: firefly-app
+    spec:
+      containers:
+        - name: firefly
+          image: fireflyiii/core:version-6.7.3
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: firefly-env
+          env:
+            - name: DB_HOST
+              value: postgres.firefly.svc.cluster.local
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_CONNECTION
+              value: pgsql
+            - name: APP_ENV
+              value: production
+            - name: APP_DEBUG
+              value: "false"
+            - name: TZ
+              value: Etc/UTC
+            - name: APP_URL
+              value: "https://firefly.example.com"
+            - name: ASSET_URL
+              value: "https://firefly.example.com"
+            # MUST be ** (Firefly docs) when behind a reverse proxy.
+            - name: TRUSTED_PROXIES
+              value: "**"
+            - name: CACHE_DRIVER
+              value: file
+            - name: SESSION_DRIVER
+              value: file
+            # Firefly maps these (NOT SESSION_SECURE_COOKIE).
+            - name: COOKIE_SECURE
+              value: "true"
+            - name: COOKIE_SAMESITE
+              value: lax
+            - name: SANCTUM_STATEFUL_DOMAINS
+              value: "firefly.example.com"
+            - name: MAIL_MAILER
+              value: smtp
+            - name: MAIL_PORT
+              value: "587"
+            - name: MAIL_ENCRYPTION
+              value: tls
+          volumeMounts:
+            - name: upload
+              mountPath: /var/www/html/storage/upload
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+      volumes:
+        - name: upload
+          persistentVolumeClaim:
+            claimName: firefly-upload
