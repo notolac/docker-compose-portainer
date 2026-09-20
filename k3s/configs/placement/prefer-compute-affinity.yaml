@@ -1,0 +1,29 @@
+# Snippet — prefer specific worker nodes for user workloads (example).
+# Replace node-01/02/03 with YOUR node hostnames (kubectl get nodes).
+# Copy under spec.template.spec of Deployments / StatefulSets / CronJobs.
+# Keep infrastructure pods (ingress, storage, monitoring) off these preferences
+# or give them their own placement.
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        preference:
+          matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - node-03
+      - weight: 80
+        preference:
+          matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - node-02
+      - weight: 50
+        preference:
+          matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - node-01

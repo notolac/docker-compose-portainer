@@ -1,0 +1,28 @@
+# Generic Ingress example — set your host, TLS, and ingress class, then apply.
+# The website builder loads the site in a same-origin iframe, so do NOT apply a
+# DENY/X-Frame-Options middleware here — SAMEORIGIN (or none) is required.
+# Live preview / bus needs websockets on Odoo's gevent port 8072 (/websocket).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: odoo
+  namespace: odoo
+spec:
+  rules:
+    - host: odoo.example.com
+      http:
+        paths:
+          - path: /websocket
+            pathType: Prefix
+            backend:
+              service:
+                name: odoo
+                port:
+                  number: 8072
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: odoo
+                port:
+                  number: 8069

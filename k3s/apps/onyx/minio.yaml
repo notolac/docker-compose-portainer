@@ -1,0 +1,80 @@
+# MinIO (S3-compatible file store) for Onyx — generic manifests.
+# Credentials come from the `onyx-env` Secret (see onyx-k3s.env.example).
+# Change `storageClassName` to yours (default here: Rook-Ceph `ceph-block`).
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: onyx
+spec:
+  selector:
+    app: onyx-minio
+  ports:
+    - name: s3
+      port: 9000
+      targetPort: 9000
+    - name: console
+      port: 9001
+      targetPort: 9001
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio
+  namespace: onyx
+spec:
+  serviceName: minio
+  replicas: 1
+  selector:
+    matchLabels:
+      app: onyx-minio
+  template:
+    metadata:
+      labels:
+        app: onyx-minio
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: minio
+          image: quay.io/minio/minio:RELEASE.2025-07-23T15-54-02Z-cpuv1
+          args: ["server", "/data", "--console-address", ":9001"]
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: onyx-env
+                  key: MINIO_ROOT_USER
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: onyx-env
+                  key: MINIO_ROOT_PASSWORD
+            - name: MINIO_DEFAULT_BUCKETS
+              value: onyx-file-store-bucket
+          ports:
+            - containerPort: 9000
+            - containerPort: 9001
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: 9000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: ceph-block
+        resources:
+          requests:
+            storage: 5Gi

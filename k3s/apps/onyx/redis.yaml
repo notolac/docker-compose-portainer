@@ -1,0 +1,49 @@
+# Ephemeral Redis for Onyx (cache only — no persistence needed).
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: onyx
+spec:
+  selector:
+    app: onyx-redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: onyx
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: onyx-redis
+  template:
+    metadata:
+      labels:
+        app: onyx-redis
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: redis
+          image: redis:7.4-alpine
+          args: ["redis-server", "--save", "", "--appendonly", "no"]
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}

@@ -1,0 +1,81 @@
+# Vespa (primary index) for Onyx — generic manifests.
+# The K8s FQDN must match the configserver identity (short hostnames panic),
+# so VESPA_CONFIGSERVERS / VESPA_HOSTNAME use the StatefulSet FQDN — keep them.
+# Change `storageClassName` to yours (default here: Rook-Ceph `ceph-block`).
+apiVersion: v1
+kind: Service
+metadata:
+  name: vespa
+  namespace: onyx
+spec:
+  selector:
+    app: onyx-vespa
+  ports:
+    - name: qrs
+      port: 8080
+      targetPort: 8080
+    - name: config
+      port: 19071
+      targetPort: 19071
+    - name: tenant
+      port: 19050
+      targetPort: 19050
+    - name: cluster
+      port: 19112
+      targetPort: 19112
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vespa
+  namespace: onyx
+spec:
+  serviceName: vespa
+  replicas: 1
+  selector:
+    matchLabels:
+      app: onyx-vespa
+  template:
+    metadata:
+      labels:
+        app: onyx-vespa
+    spec:
+      securityContext:
+        fsGroup: 1000
+      hostname: vespa-0
+      subdomain: vespa
+      enableServiceLinks: false
+      containers:
+        - name: vespa
+          image: vespaengine/vespa:8.609.39
+          env:
+            - name: VESPA_SKIP_UPGRADE_CHECK
+              value: "true"
+            # K8s FQDN must match configserver identity (short hostname vespa-0 panics).
+            - name: VESPA_CONFIGSERVERS
+              value: vespa-0.vespa.onyx.svc.cluster.local
+            - name: VESPA_HOSTNAME
+              value: vespa-0.vespa.onyx.svc.cluster.local
+          ports:
+            - containerPort: 8080
+            - containerPort: 19071
+            - containerPort: 19050
+            - containerPort: 19112
+          volumeMounts:
+            - name: data
+              mountPath: /opt/vespa/var
+          resources:
+            requests:
+              cpu: 250m
+              memory: 2Gi
+            limits:
+              memory: 8Gi
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: ceph-block
+        resources:
+          requests:
+            storage: 15Gi

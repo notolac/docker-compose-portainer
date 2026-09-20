@@ -1,0 +1,13 @@
+# Shared file-system PVC for the Onyx api/background pods.
+# Change `storageClassName` to yours (default here: Rook-Ceph `ceph-block`).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: onyx-file-system
+  namespace: onyx
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: ceph-block
+  resources:
+    requests:
+      storage: 5Gi

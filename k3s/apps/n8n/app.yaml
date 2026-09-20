@@ -1,0 +1,136 @@
+# n8n — generic K3s manifests (no personal hosts, IPs, or secrets).
+# Storage: change `storageClassName` to yours (default here: Rook-Ceph `ceph-block`).
+# Secrets live in `n8n-env` (see n8n-k3s.env.example). Set N8N_HOST / URLs to yours.
+apiVersion: v1
+kind: Service
+metadata:
+  name: n8n
+  namespace: n8n
+spec:
+  selector:
+    app: n8n
+  ports:
+    - name: http
+      port: 5678
+      targetPort: 5678
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: n8n-data
+  namespace: n8n
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: ceph-block
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: n8n
+  namespace: n8n
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: n8n
+  template:
+    metadata:
+      labels:
+        app: n8n
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: n8n
+          image: docker.n8n.io/n8nio/n8n:2.39.8
+          ports:
+            - name: http
+              containerPort: 5678
+            - name: task-broker
+              containerPort: 5679
+          env:
+            - name: TZ
+              value: Etc/UTC
+            - name: GENERIC_TIMEZONE
+              value: Etc/UTC
+            - name: N8N_HOST
+              value: n8n.example.com
+            - name: N8N_PORT
+              value: "5678"
+            - name: N8N_PROTOCOL
+              value: https
+            - name: N8N_EDITOR_BASE_URL
+              value: https://n8n.example.com/
+            - name: WEBHOOK_URL
+              value: https://n8n.example.com/
+            - name: N8N_PROXY_HOPS
+              value: "1"
+            - name: N8N_RUNNERS_MODE
+              value: external
+            - name: N8N_RUNNERS_BROKER_LISTEN_ADDRESS
+              value: "0.0.0.0"
+            - name: N8N_NATIVE_PYTHON_RUNNER
+              value: "true"
+            - name: N8N_RUNNERS_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: n8n-env
+                  key: N8N_RUNNERS_AUTH_TOKEN
+            - name: N8N_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: n8n-env
+                  key: N8N_ENCRYPTION_KEY
+            - name: DB_TYPE
+              value: postgresdb
+            - name: DB_POSTGRESDB_HOST
+              value: postgres
+            - name: DB_POSTGRESDB_PORT
+              value: "5432"
+            - name: DB_POSTGRESDB_DATABASE
+              value: n8n
+            - name: DB_POSTGRESDB_USER
+              value: n8n
+            - name: DB_POSTGRESDB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: n8n-env
+                  key: DB_POSTGRESDB_PASSWORD
+          volumeMounts:
+            - name: data
+              mountPath: /home/node/.n8n
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+        # External task runners (JS + Python) — same tag as n8n; broker on localhost:5679
+        - name: task-runners
+          image: n8nio/runners:2.39.8
+          env:
+            - name: N8N_RUNNERS_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: n8n-env
+                  key: N8N_RUNNERS_AUTH_TOKEN
+            - name: N8N_RUNNERS_TASK_BROKER_URI
+              value: http://127.0.0.1:5679
+            - name: N8N_RUNNERS_AUTO_SHUTDOWN_TIMEOUT
+              value: "15"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 768Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: n8n-data

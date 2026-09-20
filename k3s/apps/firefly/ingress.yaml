@@ -1,0 +1,20 @@
+# Generic Ingress example for the Firefly III core app — set your host, TLS,
+# and ingress class, then apply. Keep APP_URL / SANCTUM_STATEFUL_DOMAINS in
+# app.yaml in sync with this host. (The importer stays internal on purpose.)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: firefly
+  namespace: firefly
+spec:
+  rules:
+    - host: firefly.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: firefly-app
+                port:
+                  number: 8080

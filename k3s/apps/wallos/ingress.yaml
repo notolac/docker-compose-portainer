@@ -1,0 +1,18 @@
+# Generic Ingress example — set your host, TLS, and ingress class, then apply.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wallos
+  namespace: wallos
+spec:
+  rules:
+    - host: wallos.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: wallos
+                port:
+                  number: 80

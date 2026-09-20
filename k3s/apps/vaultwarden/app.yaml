@@ -1,0 +1,120 @@
+# Vaultwarden — generic K3s manifests (no personal hosts, IPs, or secrets).
+# Storage: change `storageClassName` to yours (default here: Rook-Ceph `ceph-block`).
+# Secrets live in `vaultwarden-env` (see vaultwarden-k3s.env.example).
+# Set DOMAIN below to your public URL. If you terminate TLS at the ingress,
+# keep IP_HEADER commented out unless your proxy sets that header.
+apiVersion: v1
+kind: Service
+metadata:
+  name: vaultwarden
+  namespace: vaultwarden
+spec:
+  selector:
+    app: vaultwarden
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vaultwarden-data
+  namespace: vaultwarden
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ceph-block
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vaultwarden
+  namespace: vaultwarden
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: vaultwarden
+  template:
+    metadata:
+      labels:
+        app: vaultwarden
+    spec:
+      containers:
+        - name: vaultwarden
+          image: vaultwarden/server:1.37.3
+          ports:
+            - containerPort: 80
+          env:
+            - name: SMTP_HOST
+              value: mail.example.com
+            - name: SMTP_FROM
+              value: vaultwarden@example.com
+            - name: SMTP_FROM_NAME
+              value: VaultWarden
+            - name: SMTP_SECURITY
+              value: starttls
+            - name: SMTP_PORT
+              value: "587"
+            - name: SMTP_USERNAME
+              value: vaultwarden@example.com
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-env
+                  key: SMTP_PASSWORD
+            - name: SMTP_TIMEOUT
+              value: "30"
+            - name: SMTP_AUTH_MECHANISM
+              value: Plain,Login
+            - name: LOGIN_RATELIMIT_MAX_BURST
+              value: "10"
+            - name: LOGIN_RATELIMIT_SECONDS
+              value: "60"
+            - name: DOMAIN
+              value: https://vaultwarden.example.com
+            - name: INVITATIONS_ALLOWED
+              value: "true"
+            - name: ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-env
+                  key: ADMIN_TOKEN
+            - name: SIGNUPS_ALLOWED
+              value: "false"
+            - name: SIGNUPS_VERIFY
+              value: "true"
+            - name: SIGNUPS_VERIFY_RESEND_TIME
+              value: "3600"
+            - name: SIGNUPS_VERIFY_RESEND_LIMIT
+              value: "6"
+            - name: EMERGENCY_ACCESS_ALLOWED
+              value: "true"
+            - name: SENDS_ALLOWED
+              value: "true"
+            - name: WEB_VAULT_ENABLED
+              value: "true"
+            - name: ROCKET_ADDRESS
+              value: 0.0.0.0
+            - name: ROCKET_PORT
+              value: "80"
+            - name: ICON_BLACKLIST_NON_GLOBAL_IPS
+              value: "false"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 25m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: vaultwarden-data

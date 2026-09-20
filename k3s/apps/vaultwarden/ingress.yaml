@@ -1,0 +1,20 @@
+# Generic Ingress example — set your host, TLS, and ingress class, then apply.
+# Keep DOMAIN in app.yaml in sync with this host. Terminate TLS at the
+# ingress (Vaultwarden itself serves plain HTTP on :80 here).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vaultwarden
+  namespace: vaultwarden
+spec:
+  rules:
+    - host: vaultwarden.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vaultwarden
+                port:
+                  number: 80

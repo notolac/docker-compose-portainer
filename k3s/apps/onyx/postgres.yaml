@@ -1,0 +1,85 @@
+# PostgreSQL 15 for Onyx — generic manifests (no personal data).
+# Credentials come from the `onyx-env` Secret (see onyx-k3s.env.example).
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: onyx
+spec:
+  selector:
+    app: onyx-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: onyx
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: onyx-postgres
+  template:
+    metadata:
+      labels:
+        app: onyx-postgres
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: postgres
+          image: postgres:15.2-alpine
+          args: ["-c", "max_connections=250"]
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: onyx-env
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: onyx-env
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: onyx-env
+                  key: POSTGRES_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: dshm
+              mountPath: /dev/shm
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "onyxman"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: ceph-block
+        resources:
+          requests:
+            storage: 5Gi

@@ -1,0 +1,35 @@
+# Rook-Ceph RBD pool + StorageClass for app PVCs (example).
+# Requires a healthy Rook-Ceph cluster. Adjust replica size to your OSD count
+# (size: 3 needs ≥3 OSDs/hosts; use size: 2 or 1 for smaller clusters).
+# All apps in k3s/apps/ default to the `ceph-block` StorageClass — point them
+# at yours if it has a different name.
+apiVersion: ceph.rook.io/v1
+kind: CephBlockPool
+metadata:
+  name: replicapool
+  namespace: rook-ceph
+spec:
+  failureDomain: host
+  replicated:
+    size: 3
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ceph-block
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+provisioner: rook-ceph.rbd.csi.ceph.com
+parameters:
+  clusterID: rook-ceph
+  pool: replicapool
+  imageFormat: "2"
+  csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
+  csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
+  csi.storage.k8s.io/controller-expand-secret-name: rook-csi-rbd-provisioner
+  csi.storage.k8s.io/controller-expand-secret-namespace: rook-ceph
+  csi.storage.k8s.io/node-stage-secret-name: rook-csi-rbd-node
+  csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+volumeBindingMode: Immediate
