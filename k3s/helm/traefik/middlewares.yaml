@@ -1,0 +1,99 @@
+# Shared file-provider middlewares for Traefik on K3s — TEMPLATE.
+# Loaded from ConfigMap `traefik-file-provider` (namespace `traefik`).
+# Reference as <name>@file in routers (e.g. secureHeaders@file).
+# Set YOUR Authentik host in authentikForwardAuth before using it.
+http:
+  middlewares:
+    secureHeaders:
+      headers:
+        stsSeconds: 63072000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        contentTypeNosniff: true
+        frameDeny: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        customResponseHeaders:
+          Content-Security-Policy: "upgrade-insecure-requests"
+          Permissions-Policy: "accelerometer=(), autoplay=(), camera=(), geolocation=(), gyroscope=(), microphone=(), payment=(), usb=()"
+          Server: "Proxy"
+
+    rateLimit:
+      rateLimit:
+        average: 100
+        burst: 200
+
+    # Allow only Cloudflare edge (use on WAN-facing routers).
+    # Public Cloudflare ranges: https://www.cloudflare.com/ips/
+    cloudflare:
+      ipAllowList:
+        sourceRange:
+          # Cloudflare IPv4
+          - 173.245.48.0/20
+          - 103.21.244.0/22
+          - 103.22.200.0/22
+          - 103.31.4.0/22
+          - 141.101.64.0/18
+          - 108.162.192.0/18
+          - 190.93.240.0/20
+          - 188.114.96.0/20
+          - 197.234.240.0/22
+          - 198.41.128.0/17
+          - 162.158.0.0/15
+          - 104.16.0.0/13
+          - 104.24.0.0/14
+          - 172.64.0.0/13
+          - 131.0.72.0/22
+          # Cloudflare IPv6
+          - 2400:cb00::/32
+          - 2606:4700::/32
+          - 2803:f800::/32
+          - 2405:b500::/32
+          - 2405:8100::/32
+          - 2a06:98c0::/29
+          - 2c0f:f248::/32
+
+    cloudflareHeaders:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: https
+
+    # Strip the Cloudflare X-Forwarded-For chain; Traefik re-adds one hop
+    # with the real client IP when proxying to the backend. Use it when the
+    # app reads the client IP (audit logs, app-level rules, rate limits)
+    # AND trusts X-Forwarded-For from the cluster. Skip it when the app
+    # already reads CF-Connecting-IP or a trusted XFF chain itself
+    # (then the backend would see the Traefik pod IP instead).
+    # See ../../docs/ingress-traefik.md (real client IP).
+    realClientIP:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-For: ""
+
+    # Authentik forwardAuth for apps behind SSO. Set YOUR Authentik host.
+    authentikForwardAuth:
+      forwardAuth:
+        # Public URL so outpost cookies/session match. Must be reachable
+        # from Traefik (also used by the dashboard IngressRoute).
+        address: https://auth.example.com/outpost.goauthentik.io/auth/traefik
+        trustForwardHeader: true
+        authResponseHeaders:
+          - X-authentik-username
+          - X-authentik-groups
+          - X-authentik-entitlements
+          - X-authentik-email
+          - X-authentik-name
+          - X-authentik-uid
+          - X-authentik-jwt
+          - X-authentik-meta-jwks
+          - X-authentik-meta-outpost
+          - X-authentik-meta-provider
+          - X-authentik-meta-app
+          - X-authentik-meta-version
+
+    # Redirect bare dashboard host / -> /dashboard/ (the IngressRoute only
+    # matches /dashboard and /api; without this, / is a Traefik 404).
+    traefik-dashboard-redirect:
+      redirectRegex:
+        regex: "^https?://[^/]+/?$"
+        replacement: "https://traefik.example.com/dashboard/"
+        permanent: false

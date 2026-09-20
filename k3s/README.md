@@ -49,6 +49,20 @@ Bigger apps split manifests by component (`namespace.yaml`, `postgres.yaml`,
 See the repo-wide rules in [`../AGENTS.md`](../AGENTS.md) and the Docker conventions in
 [`../README.md`](../README.md).
 
+## Publishing (Traefik)
+
+Docker stacks in this repo publish through Nginx Proxy Manager; on K3s the
+standard reverse proxy is **Traefik**:
+
+- Install: [`helm/traefik/`](helm/traefik/) (values + middlewares + `whoami` smoke test)
+- SSO: [`helm/authentik/`](helm/authentik/) · Cluster UI: [`helm/portainer/`](helm/portainer/)
+- Guide (dual Ingress/file-provider model, Cloudflare real IP, ACME):
+  [`docs/ingress-traefik.md`](docs/ingress-traefik.md)
+
+Each app's `ingress.yaml` is the default path (standard `Ingress` with
+`*.example.com` hosts — set yours). The Traefik file-provider router is the
+opt-in advanced path (see the guide).
+
 ## Deploying (generic)
 
 ```bash
@@ -59,10 +73,10 @@ kubectl apply --dry-run=client -k k3s/apps/<app>/
 kubectl apply -k k3s/apps/<app>/
 ```
 
-With Helm:
+With Helm (infrastructure releases live in subfolders — see [`helm/`](helm/)):
 
 ```bash
-helm upgrade --install <release> <chart> -f k3s/helm/<app>-values.yaml
+helm upgrade --install traefik traefik/traefik -n traefik -f my-traefik-values.yaml
 ```
 
 Copy any `*.env.example` to your own secret management — never commit real values

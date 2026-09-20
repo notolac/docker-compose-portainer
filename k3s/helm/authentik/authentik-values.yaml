@@ -1,0 +1,69 @@
+# Authentik Helm values — TEMPLATE (placeholders only, no secrets).
+# Chart: authentik/authentik — pin a version at install: helm search repo authentik/authentik
+# Copy to my-authentik-values.yaml, set YOUR host + StorageClass, never commit the copy.
+# Secrets (secret_key, postgres password) are passed via --set (see README.md),
+# never stored here.
+#
+# Required inputs:
+#   - AUTHENTIK_HOST ..... e.g. https://auth.example.com (change it)
+#   - AUTHENTIK_SECRET_KEY via --set authentik.secret_key=...
+#   - PG_USER / PG_PASS ... via --set postgresql.auth.username/password=...
+#   - STORAGE_CLASS ...... yours (defaults below are examples)
+
+authentik:
+  secret_key: ""  # set via helm --set from secrets.env (see README.md)
+  postgresql:
+    host: authentik-postgresql
+    name: authentik
+    user: authentik
+    password: ""  # set via helm --set from secrets.env
+    port: 5432
+  error_reporting:
+    enabled: false
+
+server:
+  replicas: 1
+  # Placement: assign YOUR nodes here if needed. Example snippet:
+  # see ../../configs/placement/prefer-compute-affinity.yaml
+  ingress:
+    enabled: false  # exposed via Traefik (Ingress or file-provider router)
+  env:
+    - name: AUTHENTIK_HOST
+      value: "https://auth.example.com"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+
+worker:
+  replicas: 1
+
+global:
+  image:
+    repository: ghcr.io/goauthentik/server
+    # Tag omitted: the chart defaults to its tested appVersion.
+    # To pin instead, uncomment and set a released tag
+    # (see https://goauthentik.io/releases):
+    # tag: "2025.10"
+
+postgresql:
+  enabled: true
+  auth:
+    username: authentik
+    database: authentik
+    # password: set at install — helm --set postgresql.auth.password=...
+  primary:
+    persistence:
+      enabled: true
+      storageClass: ceph-block  # change to YOURS
+      size: 8Gi
+    # To reuse an existing claim instead, uncomment:
+    # existingClaim: data-authentik-postgresql-0
+
+redis:
+  enabled: true
+  master:
+    persistence:
+      enabled: true
+      storageClass: ceph-block  # change to YOURS
+      size: 2Gi

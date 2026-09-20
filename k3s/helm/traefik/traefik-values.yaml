@@ -1,0 +1,197 @@
+# Traefik Helm values — TEMPLATE (placeholders only, no secrets).
+# Chart: traefik/traefik — pin a version at install: helm search repo traefik/traefik
+# Copy to my-traefik-values.yaml, set YOUR hosts/IPs/StorageClass, never commit the copy.
+#
+# Required inputs:
+#   - METALLB_VIP ............ free IP of YOUR LAN for the Traefik LoadBalancer
+#                              (must sit inside your MetalLB pool)
+#   - ACME_EMAIL ............. Let's Encrypt contact email
+#   - DASHBOARD_HOST ......... e.g. traefik.example.com (change it)
+#   - STORAGE_CLASS .......... yours (default below is an example)
+#   - Secret traefik-cloudflare-dns (key `token`) in namespace `traefik`
+#     holds the Cloudflare DNS-edit API token — created separately, never here.
+
+hostNetwork: false
+
+# Chart key (not deployment.strategy). Recreate: RWO PVC (acme + logs); one Traefik pod.
+updateStrategy:
+  type: Recreate
+
+additionalVolumeMounts:
+  - name: traefik-logs
+    mountPath: /logs
+
+# Traefik runs as UID 65532; without fsGroup it cannot create access.log on the PVC.
+podSecurityContext:
+  fsGroup: 65532
+  fsGroupChangePolicy: OnRootMismatch
+
+deployment:
+  podAnnotations: {}
+  # HPA is not viable with an RWO PVC (acme.json + access.log). Scale vertically instead.
+  replicas: 1
+  revisionHistoryLimit: 2
+  # fsGroup leaves acme.json at 660; Traefik requires 600 or it disables the resolver.
+  initContainers:
+    - name: fix-acme-perms
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - test -f /letsencrypt/acme.json && chmod 600 /letsencrypt/acme.json || true
+      volumeMounts:
+        - name: data
+          mountPath: /letsencrypt
+  additionalVolumes:
+    - name: traefik-logs
+      persistentVolumeClaim:
+        claimName: traefik-logs
+
+image:
+  # Pin to a tested tag; check upstream releases before bumping.
+  tag: "v3.7"
+versionOverride: "v3.7"
+
+service:
+  enabled: true
+  type: LoadBalancer
+  # Preserve client IP so ipAllowList middlewares see the real peer.
+  # Without this, Cluster SNAT hides the source behind the node IP.
+  spec:
+    externalTrafficPolicy: Local
+  annotations:
+    # Set YOUR free LAN IP (inside your MetalLB pool). Example range:
+    # see ../../configs/metallb/ipaddresspool.yaml.example
+    metallb.universe.tf/loadBalancerIPs: "192.168.1.240"
+    metallb.universe.tf/address-pool: main
+
+ports:
+  web:
+    expose:
+      default: false
+  websecure:
+    port: 443
+    expose:
+      default: true
+    exposedPort: 443
+    protocol: TCP
+    http3:
+      enabled: true
+  metrics:
+    port: 8082
+    protocol: TCP
+    expose:
+      default: false
+
+providers:
+  kubernetesCRD:
+    enabled: true
+    allowCrossNamespace: true
+  kubernetesIngress:
+    enabled: true
+    allowExternalNameServices: true
+  # Dynamic YAML (routers/middlewares below) mounted from a ConfigMap.
+  file:
+    enabled: true
+    watch: true
+
+# API + dashboard (required for api@internal; CLI --api.dashboard alone is not enough).
+api:
+  dashboard: true
+
+ingressRoute:
+  dashboard:
+    enabled: true
+    # Set YOUR dashboard host. Bare / is a Traefik 404 by default;
+    # redirect it with the traefik-dashboard-redirect middleware (see middlewares.yaml).
+    matchRule: Host(`traefik.example.com`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))
+    entryPoints:
+      - websecure
+    middlewares:
+      # Optional: protect the dashboard with Authentik forwardAuth.
+      # Create it first (middleware-authentik.yaml.example) or remove this block.
+      - name: authentik-forwardauth
+    tls:
+      certResolver: cloudflare
+
+log:
+  level: INFO
+
+accessLog:
+  enabled: true
+  filePath: /logs/access.log
+  format: common
+  bufferingSize: 1
+  addInternals: true
+  fields:
+    defaultMode: keep
+    headers:
+      defaultMode: keep
+      names:
+        User-Agent: keep
+        Referer: keep
+
+metrics:
+  prometheus:
+    entryPoint: metrics
+    addEntryPointsLabels: true
+    addRoutersLabels: true
+
+# ACME storage + access logs. Change storageClass to YOURS.
+persistence:
+  enabled: true
+  storageClass: ceph-block
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  path: /letsencrypt
+  # After install, restore your acme.json into the PVC if you migrate an
+  # existing setup; otherwise Traefik issues fresh certificates.
+  # To reuse an existing claim instead, uncomment:
+  # existingClaim: traefik-data
+
+# DNS-01 via Cloudflare (mirrors the Docker Traefik stack in docker/traefik/).
+# Token comes from Secret traefik-cloudflare-dns (key `token`) — never a value here.
+env:
+  - name: CF_DNS_API_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: traefik-cloudflare-dns
+        key: token
+additionalArguments:
+  # file provider path is set by the chart when providers.file.enabled=true (do not duplicate it)
+  # accesslog.* flags moved to the accessLog: block (chart v41+)
+  - "--certificatesresolvers.cloudflare.acme.email=admin@example.com"
+  - "--certificatesresolvers.cloudflare.acme.storage=/letsencrypt/acme.json"
+  - "--certificatesresolvers.cloudflare.acme.dnschallenge=true"
+  - "--certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare"
+  # Public resolvers for the ACME DNS-01 pre-check (avoid LAN DNS cache/rate-limit issues).
+  - "--certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53"
+  # Trust Cloudflare edge ranges for X-Forwarded-* (public ranges, keep in sync
+  # with the `cloudflare` middleware in middlewares.yaml).
+  - "--entrypoints.websecure.forwardedheaders.trustedips=173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/13,104.24.0.0/14,172.64.0.0/13,131.0.72.0/22,2400:cb00::/32,2606:4700::/32,2803:f800::/32,2405:b500::/32,2405:8100::/32,2a06:98c0::/29,2c0f:f248::/32"
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: "2"
+    memory: 1Gi
+
+# Placement: assign YOUR nodes here if needed. Example snippet:
+# see ../../configs/placement/prefer-compute-affinity.yaml
+# affinity:
+#   nodeAffinity:
+#     preferredDuringSchedulingIgnoredDuringExecution:
+#       - weight: 100
+#         preference:
+#           matchExpressions:
+#             - key: kubernetes.io/hostname
+#               operator: In
+#               values:
+#                 - node-03
+
+# ConfigMap traefik-file-provider (chart key) — create BEFORE helm upgrade:
+#   kubectl -n traefik create configmap traefik-file-provider \
+#     --from-file=middlewares.yaml \
+#     --from-file=dynamic-app-example.yaml

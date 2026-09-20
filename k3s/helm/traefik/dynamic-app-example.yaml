@@ -1,0 +1,48 @@
+# File-provider router template for ONE K3s app — copy and set YOUR values.
+# Add the copy to ConfigMap `traefik-file-provider` (namespace `traefik`):
+#   kubectl -n traefik create configmap traefik-file-provider \
+#     --from-file=middlewares.yaml --from-file=myapp.yaml \
+#     --dry-run=client -o yaml | kubectl apply -f -
+# Traefik reloads file-provider changes automatically (no restart needed
+# unless additionalArguments / entrypoints change).
+#
+# Required inputs:
+#   APP_HOST ....... e.g. myapp.example.com (change it)
+#   APP_NAMESPACE .. e.g. myapp
+#   APP_SERVICE .... e.g. myapp (ClusterIP Service name)
+#   APP_PORT ....... e.g. 80
+#
+# Standard chain for a WAN-facing app behind Cloudflare:
+#   cloudflare@file -> cloudflareHeaders@file -> secureHeaders@file
+# Add realClientIP@file after cloudflare@file when the backend needs the
+# real client IP (see middlewares.yaml + ../../docs/ingress-traefik.md).
+# Add authentikForwardAuth@file to put the app behind SSO.
+http:
+  routers:
+    myapp:
+      rule: "Host(`myapp.example.com`)"
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: cloudflare
+      middlewares:
+        - cloudflare@file
+        - cloudflareHeaders@file
+        - secureHeaders@file
+      service: myapp-svc
+
+  services:
+    myapp-svc:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://myapp.myapp.svc.cluster.local:80"
+        # Uncomment when the backend needs longer timeouts (LLM apps, etc.):
+        # serversTransport: myapp-transport
+
+  # serversTransports:
+  #   myapp-transport:
+  #     forwardingTimeouts:
+  #       dialTimeout: "10s"
+  #       responseHeaderTimeout: "60s"
+  #       idleConnTimeout: "120s"
