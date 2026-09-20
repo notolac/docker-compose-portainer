@@ -27,7 +27,7 @@ services:
       - monitoring
 
   grafana:
-    image: grafana/grafana-oss:${GRAFANA_IMAGE_TAG:-13.2.2}
+    image: grafana/grafana:${GRAFANA_IMAGE_TAG:-13.2.2}
     container_name: grafana
     restart: unless-stopped
     depends_on:
