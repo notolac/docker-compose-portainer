@@ -34,7 +34,7 @@ RCLONE_RESTORE_SCRIPT=/home/notolac/scripts/rclone_entrypoint_restore.sh
 MULTIMEDIA_PATH=/srv/multimedia
 PLEX_PATH=/srv/Plex
 RCLONE_SCRIPT=backup
-RCLONE_REMOTE=chiguire-bot-gdrive
+RCLONE_REMOTE=my-remote
 ```
 
 Copia de referencia también en el repo `home-lab`:
@@ -42,7 +42,7 @@ Copia de referencia también en el repo `home-lab`:
 
 Notas `.11`:
 
-- Los scripts bajo `/home/notolac/scripts/` tienen el remote **hardcodeado** (`chiguire-bot-gdrive`); `RCLONE_REMOTE` no cambia ese comportamiento, pero sí aplica si montas los entrypoints de este repo.
+- Los scripts bajo `/home/user/scripts/` tienen el remote **hardcodeado** (`my-remote`); `RCLONE_REMOTE` no cambia ese comportamiento, pero sí aplica si montas los entrypoints de este repo.
 - `PROXMOX_PATH` se puede omitir (default `/data/proxmox`).
 
 ## Despliegue Portainer (Git)

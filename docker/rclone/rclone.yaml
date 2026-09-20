@@ -17,7 +17,7 @@
 #   MULTIMEDIA_PATH=/srv/multimedia
 #   PLEX_PATH=/srv/Plex
 #   RCLONE_SCRIPT=backup
-#   RCLONE_REMOTE=chiguire-bot-gdrive
+#   RCLONE_REMOTE=my-remote
 #
 # Generate rclone.conf:
 #   docker run -it -v /opt/rclone/config:/config/rclone rclone/rclone:latest config
