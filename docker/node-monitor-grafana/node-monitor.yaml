@@ -77,7 +77,7 @@ services:
       - monitoring
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:${CADVISOR_IMAGE_TAG:-v0.60.6}
+    image: ghcr.io/google/cadvisor:${CADVISOR_IMAGE_TAG:-v0.60.6}
     container_name: cadvisor
     restart: unless-stopped
     privileged: true
