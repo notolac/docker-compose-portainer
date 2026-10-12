@@ -36,5 +36,11 @@ No real values are committed — names and purpose only.
 | `SEMAPHORE_ACCESS_KEY_ENCRYPTION` | Passphrase Semaphore uses to encrypt stored access keys. |
 | `SEMAPHORE_SSH_RUNNER_PATH` | Host directory with the SSH key for runner jobs, mounted read-only at `/tmp/orch_ssh`. Must be set in the stack Environment **before** the redeploy that introduces it; if missing, the bind falls back to the built-in default and the container may fail to start. |
 
+## Version
+
+The Semaphore image is pinned (`v2.19.16`). Do not use `latest`: upstream retags it with
+2.18.x backports, and running an older binary than the database schema stops every schedule
+(`gorp: no fields [...] in type Template`). Upgrade only forward, after a `mysqldump`.
+
 MySQL uses `MYSQL_RANDOM_ROOT_PASSWORD` and a named volume; no local root password
 to manage.
