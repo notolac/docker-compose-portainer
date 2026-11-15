@@ -1,6 +1,6 @@
 # AGENTS — LLM only
 
-**Last modified:** 2026-09-20
+**Last modified:** 2026-11-15
 
 Human intro + repo map: [README.md](README.md).
 Service catalog: [STACKS.md](STACKS.md).
@@ -9,6 +9,8 @@ K3s layout + conventions: [k3s/README.md](k3s/README.md).
 ---
 
 ## RULES (this file)
+
+- Public documentation must stand alone: never name or link private repositories, internal hosts, access reviews, or operational gaps. Keep administrative audit records outside this repository.
 
 - **RULE:** Show **last modified** date at top; bump when you change this file.
 - **RULE:** Write **English** only here.

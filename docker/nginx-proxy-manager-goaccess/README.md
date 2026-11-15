@@ -4,8 +4,7 @@ Reverse proxy with a web UI, built-in Let's Encrypt, custom security headers,
 and real-time log analytics via GoAccess.
 
 This folder is the public, reusable stack for [Nginx Proxy Manager](https://nginxproxymanager.com/)
-plus [GoAccess](https://goaccess.io/). Operational details of any private homelab
-stay out of this repo.
+plus [GoAccess](https://goaccess.io/). Deployment-specific values belong in your local configuration.
 
 ![Nginx Proxy Manager](image.png)
 

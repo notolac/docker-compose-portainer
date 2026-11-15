@@ -10,15 +10,6 @@
 # - PLEX_PATH              Local Plex library (default: /data/plex)
 # - PROXMOX_PATH           Optional Proxmox backup path (default: /data/proxmox)
 #
-# Homelab .11 example env:
-#   RCLONE_CONFIG_PATH=/home/user/.config/rclone/rclone.conf
-#   RCLONE_BACKUP_SCRIPT=/home/user/scripts/rclone_entrypoint_backup.sh
-#   RCLONE_RESTORE_SCRIPT=/home/user/scripts/rclone_entrypoint_restore.sh
-#   MULTIMEDIA_PATH=/srv/multimedia
-#   PLEX_PATH=/srv/Plex
-#   RCLONE_SCRIPT=backup
-#   RCLONE_REMOTE=my-remote
-#
 # Generate rclone.conf:
 #   docker run -it -v /opt/rclone/config:/config/rclone rclone/rclone:latest config
 #

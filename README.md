@@ -4,21 +4,10 @@ Public collection of **Docker Compose / Docker Swarm** stack files and generic *
 for self-hosted applications, designed to deploy via [Portainer](https://www.portainer.io/),
 the Docker CLI, or `kubectl` / Helm.
 
-This repository is the **public, reusable** counterpart to a private homelab knowledge base. It contains generic manifests and documentation only — no hostnames, internal IPs, or personal paths.
+The manifests use environment variables and neutral defaults so they can be adapted to different deployments.
 
 Top-level layout: [`docker/`](docker/) for Compose/Swarm stacks, [`k3s/`](k3s/) for Kubernetes
 manifests — one folder per service inside each of them.
-
-## Relationship with private homelab docs
-
-| Aspect | This repo (public) | Private homelab repo |
-|--------|-------------------|----------------------|
-| Purpose | Shareable stacks for anyone | Architecture, hosts, runbooks, secrets |
-| Paths / IPs | Environment variables with neutral defaults | Real host paths and network layout |
-| Secrets | `.env.example` / Portainer env vars | Local `.env` files (never committed) |
-| Runtime | Docker Compose / Swarm (`docker/`) + K3s (`k3s/`) | K3s (primary) + Compose on dedicated hosts |
-
-If you maintain a private homelab repo, treat this one as the **source of truth for stack YAML** that third parties can fork. Keep operational details (SSH, DNS, backups, VLANs) in your private documentation.
 
 ## Prerequisites
 
@@ -236,3 +225,7 @@ sudo apt install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
 ## License
 
 MIT — see individual stack upstream licenses for application-specific terms.
+
+## Seguridad de GitHub
+
+[Controles, motivo, verificación y reversión](docs/github-hardening.md).

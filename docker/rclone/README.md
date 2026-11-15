@@ -25,30 +25,16 @@ Sin comillas. Nombres exactos usados por `rclone.yaml`:
 | `PLEX_PATH` | `/data/plex` | Librería Plex en el host |
 | `PROXMOX_PATH` | `/data/proxmox` | Opcional (backups Proxmox) |
 
-### Homelab `.11` (Portainer — valores validados)
+### Ejemplo de configuración
 
-```env
-RCLONE_CONFIG_PATH=/home/user/.config/rclone/rclone.conf
-RCLONE_BACKUP_SCRIPT=/home/user/scripts/rclone_entrypoint_backup.sh
-RCLONE_RESTORE_SCRIPT=/home/user/scripts/rclone_entrypoint_restore.sh
-MULTIMEDIA_PATH=/srv/multimedia
-PLEX_PATH=/srv/Plex
-RCLONE_SCRIPT=backup
-RCLONE_REMOTE=my-remote
-```
-
-Copia de referencia también en el repo `documentation`:
-`servicios-apps/docker-compose/media-11/rclone.yaml.env`.
-
-Notas `.11`:
-
-- Los scripts bajo `/home/user/scripts/` tienen el remote **hardcodeado** (`my-remote`); `RCLONE_REMOTE` no cambia ese comportamiento, pero sí aplica si montas los entrypoints de este repo.
-- `PROXMOX_PATH` se puede omitir (default `/data/proxmox`).
+Usa rutas absolutas a los archivos y directorios de tu instalación. Los valores de
+la tabla son ejemplos; configura el nombre del remote según tu rclone.conf.
+PROXMOX_PATH puede omitirse para usar el valor predeterminado.
 
 ## Despliegue Portainer (Git)
 
 1. Stack → Git: repo `docker-compose-portainer`, path `rclone/rclone.yaml` (o carpeta `rclone/` según cómo esté el stack).
-2. Pegar las variables de entorno (tabla / bloque `.11` arriba).
+2. Pegar las variables de entorno (tabla de configuración anterior).
 3. Deploy / Update the stack.
 4. Comprobar: logs sin `Permission denied`; mounts de `/backup.sh` y `rclone.conf` como **ficheros**, no directorios.
 
@@ -72,7 +58,7 @@ Mitigación:
 ## Generar / refrescar `rclone.conf`
 
 ```sh
-docker run -it -v /home/user/.config/rclone:/config/rclone rclone/rclone:latest config
+docker run -it -v /opt/rclone/config:/config/rclone rclone/rclone:latest config
 ```
 
 (Ajusta el volumen al `RCLONE_CONFIG_PATH` del host.)
