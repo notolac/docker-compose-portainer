@@ -142,6 +142,12 @@ Env gates (`*_YES=yes`) are **not** a substitute for user approval on destructiv
 
 ---
 
+## Optional agent memory
+
+- If the agent environment provides persistent memory, recall repository context before non-trivial work. If unavailable, continue without it.
+- Retain only verified fixes, decisions, or gotchas, tagged `project:docker-compose-portainer`. Repository documentation is authoritative.
+- Never retain secrets, tokens, `.env` values, personal data, transcripts, or private infrastructure details.
+
 ## If you update this file later
 
 - Keep English.
