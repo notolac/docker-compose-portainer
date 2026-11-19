@@ -38,7 +38,7 @@ No real values are committed — names and purpose only.
 
 ## Version
 
-The Semaphore image is pinned (`v2.19.16`). Do not use `latest`: upstream retags it with
+The Semaphore image is pinned (`v2.20.24`). Do not use `latest`: upstream retags it with
 2.18.x backports, and running an older binary than the database schema stops every schedule
 (`gorp: no fields [...] in type Template`). Upgrade only forward, after a `mysqldump`.
 

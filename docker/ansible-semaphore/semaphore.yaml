@@ -35,7 +35,7 @@ services:
     container_name: ansiblesemaphore
     # Pinned: `latest` follows the 2.18.x backports and went backwards (2.19 → 2.18.31,
     # 2026-10-11), which broke the scheduler on a DB migrated to 2.19. Never downgrade.
-    image: semaphoreui/semaphore:v2.19.16
+    image: semaphoreui/semaphore:v2.20.24
     ports:
       - $HOST_PORT:3000
     environment:
