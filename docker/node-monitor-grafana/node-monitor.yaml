@@ -10,7 +10,7 @@
 
 services:
   prometheus:
-    image: prom/prometheus:${PROMETHEUS_IMAGE_TAG:-v3.14.0}
+    image: prom/prometheus:${PROMETHEUS_IMAGE_TAG:-v3.16.0}
     container_name: prometheus
     restart: unless-stopped
     ports:
@@ -27,7 +27,7 @@ services:
       - monitoring
 
   grafana:
-    image: grafana/grafana:${GRAFANA_IMAGE_TAG:-13.2.2}
+    image: grafana/grafana:${GRAFANA_IMAGE_TAG:-13.3.1}
     container_name: grafana
     restart: unless-stopped
     depends_on:
@@ -48,7 +48,7 @@ services:
       - monitoring
 
   loki:
-    image: grafana/loki:${LOKI_IMAGE_TAG:-3.7.8}
+    image: grafana/loki:${LOKI_IMAGE_TAG:-3.7.10}
     container_name: loki
     restart: unless-stopped
     ports:
@@ -77,7 +77,7 @@ services:
       - monitoring
 
   cadvisor:
-    image: ghcr.io/google/cadvisor:${CADVISOR_IMAGE_TAG:-v0.60.6}
+    image: ghcr.io/google/cadvisor:${CADVISOR_IMAGE_TAG:-v0.61.1}
     container_name: cadvisor
     restart: unless-stopped
     privileged: true
